@@ -212,3 +212,6 @@ __marimo__/
 # Scripts
 *.sh
 !*template.sh
+
+# Outputs
+outputs/
