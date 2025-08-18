@@ -3,6 +3,7 @@ import logging
 from utils.get_data import yield_from_jsonl
 from sentence_transformers import SentenceTransformer
 import numpy as np
+from os import path
 
 
 def set_up_logger(verbosity_level:int):
@@ -21,12 +22,21 @@ def main(args):
     data_files = args.data_files
     key = args.key
     k_documents = args.k
+    dest_folder = args.save_to
+
+    embedding_file = path.join(dest_folder, "mock_embeddings.npy")
 
     documents = list(yield_from_jsonl(data_files, key, k_documents))
 
     model = SentenceTransformer(model_name)
     embeddings = model.encode(documents)
-    np.save("mock_embeddings.npy", embeddings)
+    logger.info(f"Embeddings array has the following shape: {embeddings.shape}")
+    np.save(embedding_file, embeddings)
+    logger.info(f"Embeddings saved into {embedding_file}")
+
+    # Test loading
+    loaded_embeddings = np.load(embedding_file)
+    logger.info(f"Loaded embeddings array with the following shape: {loaded_embeddings.shape}")
 
 
 if __name__ == "__main__":
