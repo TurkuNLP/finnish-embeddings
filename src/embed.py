@@ -8,7 +8,7 @@ def main(args):
     data_files = args.data_files
     key = args.key
 
-    documents = yield_from_jsonl(data_files, key)
+    documents = list(yield_from_jsonl(data_files, key))
 
     model = SentenceTransformer(model_name)
     embeddings = model.encode(documents)
