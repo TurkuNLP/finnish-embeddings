@@ -2,6 +2,7 @@ import argparse
 import logging
 from utils.get_data import yield_from_jsonl
 from sentence_transformers import SentenceTransformer
+import numpy as np
 
 
 def set_up_logger(verbosity_level:int):
@@ -25,7 +26,7 @@ def main(args):
 
     model = SentenceTransformer(model_name)
     embeddings = model.encode(documents)
-    print(embeddings)
+    np.save("mock_embeddings.npy", embeddings)
 
 
 if __name__ == "__main__":
@@ -34,6 +35,8 @@ if __name__ == "__main__":
                         help="Which Sentence Transformer model to use. Refer to https://sbert.net/docs/sentence_transformer/pretrained_models.html for an overview of available models.")
     parser.add_argument("data_files",
                         help="Path to the JSONL file.")
+    parser.add_argument("save_to",
+                        help="Path to the directory where the resulting embedding array should be saved.")
     parser.add_argument("--key",
                         default="text_end",
                         help="The key to the field that should be extracted from each row of JSONL file defined with parameter 'data_files'.")
