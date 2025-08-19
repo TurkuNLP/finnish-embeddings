@@ -39,7 +39,7 @@ def encode_in_batches(documents, num_documents:int, model:SentenceTransformer, o
         end_idx = start_idx + len(batch) # use len() instead of batch_size as last batch can be smaller
         
         # Encode batch and write directly to memmap
-        batch_embeddings = model.encode(batch)
+        batch_embeddings = model.encode(batch, batch_size=batch_size)
         memmap_file[start_idx:end_idx] = batch_embeddings
     
     # Flush to disk
@@ -62,16 +62,16 @@ def main(args):
     batch_size = args.batch_size
     dest_folder = args.save_to
 
-    embedding_file = path.join(dest_folder, "mock_embeddings.npy")
+    embedding_file = path.join(dest_folder, f"{model_name.replace('/', '__')}_embeddings.npy")
 
     model = SentenceTransformer(model_name)
-
-    num_documents = get_line_count(data_files)
+    
+    num_documents = get_line_count(data_files) if not k_first else k_first
     documents = yield_from_jsonl(data_files, dict_key, k_first)
     encode_in_batches(documents, num_documents, model, embedding_file, batch_size)
 
     # Test loading
-    load_data(embedding_file)    
+    #load_data(embedding_file)    
 
 
 if __name__ == "__main__":
