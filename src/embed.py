@@ -14,7 +14,7 @@ def set_up_logger(verbosity_level:int):
 def log_args(args):
     logger.info(args)
 
-def encode_in_batches(documents, num_documents, model:SentenceTransformer, output_file:str, batch_size:int):
+def encode_in_batches(documents, num_documents:int, model:SentenceTransformer, output_file:str, batch_size:int):
     
     batched_documents = do_batching(documents, batch_size)
     
@@ -33,7 +33,7 @@ def encode_in_batches(documents, num_documents, model:SentenceTransformer, outpu
     
     # Process in batches
     for i, batch in enumerate(batched_documents):
-        logger.debug(f"Processing batch {i+1}/{len(documents)//batch_size + 1}")
+        logger.debug(f"Processing batch {i+1}/{num_documents//batch_size + 1}")
         start_idx = i * batch_size
         end_idx = start_idx + len(batch)
         
@@ -68,11 +68,6 @@ def main(args):
     num_documents = get_line_count(data_files)
     documents = yield_from_jsonl(data_files, dict_key, k_documents)
     encode_in_batches(documents, num_documents, model, embedding_file, batch_size)
-
-    embeddings = model.encode(documents)
-    
-    np.save(embedding_file, embeddings)
-    logger.info(f"Embeddings saved into {embedding_file}")
 
     # Test loading
     load_data()    
