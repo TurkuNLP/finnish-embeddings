@@ -70,7 +70,7 @@ def main(args):
     encode_in_batches(documents, num_documents, model, embedding_file, batch_size)
 
     # Test loading
-    load_data()    
+    load_data(embedding_file)    
 
 
 if __name__ == "__main__":
