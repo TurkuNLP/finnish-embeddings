@@ -32,10 +32,11 @@ def encode_in_batches(documents, num_documents:int, model:SentenceTransformer, o
     logger.debug(f"Created a memory-mapped file with the following shape: ({num_documents}, {embedding_dim})")
     
     # Process in batches
+    num_batches = num_documents // batch_size + 1 if num_documents % batch_size != 0 else num_documents // batch_size
     for i, batch in enumerate(batched_documents):
-        logger.debug(f"Processing batch {i+1}/{num_documents//batch_size + 1}")
+        logger.debug(f"Processing batch {i+1}/{num_batches}")
         start_idx = i * batch_size
-        end_idx = start_idx + len(batch)
+        end_idx = start_idx + len(batch) # use len() instead of batch_size as last batch can be smaller
         
         # Encode batch and write directly to memmap
         batch_embeddings = model.encode(batch)
@@ -56,8 +57,8 @@ def main(args):
 
     model_name = args.model
     data_files = args.data_files
-    dict_key = args.key
-    k_documents = args.k
+    dict_key = args.dict_key
+    k_first = args.k_first
     batch_size = args.batch_size
     dest_folder = args.save_to
 
@@ -66,7 +67,7 @@ def main(args):
     model = SentenceTransformer(model_name)
 
     num_documents = get_line_count(data_files)
-    documents = yield_from_jsonl(data_files, dict_key, k_documents)
+    documents = yield_from_jsonl(data_files, dict_key, k_first)
     encode_in_batches(documents, num_documents, model, embedding_file, batch_size)
 
     # Test loading
@@ -81,10 +82,11 @@ if __name__ == "__main__":
                         help="Path to the JSONL file.")
     parser.add_argument("save_to",
                         help="Path to the directory where the resulting embedding array should be saved.")
-    parser.add_argument("--key",
+    parser.add_argument("--dict_key",
                         default="text_end",
                         help="The key to the field that should be extracted from each row of JSONL file defined with parameter 'data_files'.")
-    parser.add_argument("--k",
+    parser.add_argument("--k_first",
+                        type=int,
                         help="Pick first k documents from the JSONL file defined with parameter 'data_files'.")
     parser.add_argument("--batch_size",
                         default=32,
