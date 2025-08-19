@@ -1,6 +1,6 @@
 import argparse
 import logging
-from utils.get_data import yield_from_jsonl
+from utils.helpers import yield_from_jsonl, do_batching, get_line_count
 from sentence_transformers import SentenceTransformer
 import numpy as np
 from os import path
@@ -14,29 +14,68 @@ def set_up_logger(verbosity_level:int):
 def log_args(args):
     logger.info(args)
 
+def encode_in_batches(documents, num_documents, model:SentenceTransformer, output_file:str, batch_size:int):
+    
+    batched_documents = do_batching(documents, batch_size)
+    
+    # Get embedding dimension
+    embedding_dim = model.get_sentence_embedding_dimension()
+    
+    # Create memory-mapped file
+    memmap_file = np.lib.format.open_memmap(
+        output_file, 
+        dtype=np.float32, 
+        mode='w+',
+        shape=(num_documents, embedding_dim)
+    )
+
+    logger.debug(f"Created a memory-mapped file with the following shape: ({num_documents}, {embedding_dim})")
+    
+    # Process in batches
+    for i, batch in enumerate(batched_documents):
+        logger.debug(f"Processing batch {i+1}/{len(documents)//batch_size + 1}")
+        start_idx = i * batch_size
+        end_idx = start_idx + len(batch)
+        
+        # Encode batch and write directly to memmap
+        batch_embeddings = model.encode(batch)
+        memmap_file[start_idx:end_idx] = batch_embeddings
+    
+    # Flush to disk
+    memmap_file.flush()
+    
+    return
+
+def load_data(filename):
+    loaded_embeddings = np.load(filename)
+    logger.debug(f"Loaded embeddings array with the following shape: {loaded_embeddings.shape}")
+
 def main(args):
 
     log_args(args)
 
     model_name = args.model
     data_files = args.data_files
-    key = args.key
+    dict_key = args.key
     k_documents = args.k
+    batch_size = args.batch_size
     dest_folder = args.save_to
 
     embedding_file = path.join(dest_folder, "mock_embeddings.npy")
 
-    documents = list(yield_from_jsonl(data_files, key, k_documents))
-
     model = SentenceTransformer(model_name)
+
+    num_documents = get_line_count(data_files)
+    documents = yield_from_jsonl(data_files, dict_key, k_documents)
+    encode_in_batches(documents, num_documents, model, embedding_file, batch_size)
+
     embeddings = model.encode(documents)
-    logger.info(f"Embeddings array has the following shape: {embeddings.shape}")
+    
     np.save(embedding_file, embeddings)
     logger.info(f"Embeddings saved into {embedding_file}")
 
     # Test loading
-    loaded_embeddings = np.load(embedding_file)
-    logger.info(f"Loaded embeddings array with the following shape: {loaded_embeddings.shape}")
+    load_data()    
 
 
 if __name__ == "__main__":
@@ -52,6 +91,11 @@ if __name__ == "__main__":
                         help="The key to the field that should be extracted from each row of JSONL file defined with parameter 'data_files'.")
     parser.add_argument("--k",
                         help="Pick first k documents from the JSONL file defined with parameter 'data_files'.")
+    parser.add_argument("--batch_size",
+                        default=32,
+                        type=int,
+                        help="How many documents should be encoded simultaneously."
+                        )
     parser.add_argument("--verbosity",
                         default=3,
                         choices=[0, 1, 2, 3],
