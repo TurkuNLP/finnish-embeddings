@@ -13,13 +13,15 @@ def parse_query_args(query:str, dict_key:str, indices:list|set=None):
 
 def show_textual_evaluation(filename, queries, result_indices):
 
-    retrieved_documents = get_data_as_dict(filename, "text_end", result_indices.reshape(-1))
+    retrieved_documents = get_data_as_dict(filename, "text_end", set(result_indices.reshape(-1)))
 
     for query, top_k in zip(queries, result_indices):
         print(f"Query: {query}")
         print(f"Top-{len(top_k)} results:")
-        for i, article_index in enumerate(top_k):
-            print(f"{i}: {retrieved_documents[article_index]}")
+        for i, article_index in enumerate(top_k, 1):
+            print(f"Result {i}:")
+            print(retrieved_documents[article_index])
+            print("\n")
         print("\n")
 
 def main(args):
@@ -52,9 +54,11 @@ if __name__ == "__main__":
     parser.add_argument("query",
                         help="Query (a single string) to be encoded, or a filename to a JSONL file where strings can be extracted from.")
     parser.add_argument("--dict_key",
-                        default="text_end",
+                        default="title",
                         help="The key to the field that should be extracted if a filename ending with .jsonl is given as the 'query' argument.")
     parser.add_argument("--indices",
+                        type=int,
+                        nargs='+',
                         help="Which rows of the JSONL file specified with parameter 'query' to get. (Indexing starting at 0.)")
     parser.add_argument("--k_nearest",
                         type=int,
