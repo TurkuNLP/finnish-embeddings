@@ -7,7 +7,8 @@
 #SBATCH --gres=gpu:v100:1
 
 # Load needed module(s)
-module load pytorch
+# Note! Using the latest pytorch module would need resolving some package conflicts
+module load pytorch/2.5
 
 # Declare variables
 export HF_HOME=<INSERT_CACHE_PATH>
