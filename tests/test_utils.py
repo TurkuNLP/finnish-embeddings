@@ -1,4 +1,4 @@
-from src.utils.helpers import yield_from_jsonl, do_batching
+from src.utils.helpers import yield_from_jsonl, get_data_as_dict, do_batching
 from dotenv import load_dotenv
 import os
 import pytest
@@ -20,6 +20,20 @@ def test_yield_from_jsonl():
     for k in k_values:
         k_titles = list(yield_from_jsonl(path_to_mock_data, "title", k))
         assert len(k_titles) == k
+    
+    i_values = [0, 9]
+
+    i_titles = list(yield_from_jsonl(path_to_mock_data, "title", indices=i_values))
+    assert len(i_titles) == 2
+
+def test_get_data_as_dict():
+
+    indices = [0, 2, 4]
+    data_dict = get_data_as_dict(path_to_mock_data, indices=indices)
+
+    assert len(data_dict) == len(indices)
+    assert 2 in data_dict
+    assert 1 not in data_dict
 
 def test_batch_process():
 
@@ -39,3 +53,11 @@ def test_batch_process():
     
     assert len(list(do_batching(yield_documents(), 2))) == 5
     assert list(do_batching(yield_documents(), 2))[0] == ["one", "two"]
+
+def test_batch_counter():
+    def batch_counter(num_documents:int, batch_size:int):
+        return num_documents // batch_size + 1 if num_documents % batch_size != 0 else num_documents // batch_size
+    
+    assert batch_counter(10, 2) == 5
+    assert batch_counter(11, 2) == 6
+    assert batch_counter(128, 32) == 4

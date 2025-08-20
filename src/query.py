@@ -1,7 +1,26 @@
 import argparse
+from utils.helpers import yield_from_jsonl, get_data_as_dict
 import faiss
 from sentence_transformers import SentenceTransformer
 
+def parse_query_args(query:str, dict_key:str, indices:list|set=None):
+
+    # If the given query argument is a filename
+    if query.endswith(".jsonl"):
+        return list(yield_from_jsonl(query, dict_key, indices=indices))
+    
+    return [query]
+
+def show_textual_evaluation(filename, queries, result_indices):
+
+    retrieved_documents = get_data_as_dict(filename, "text_end", result_indices.reshape(-1))
+
+    for query, top_k in zip(queries, result_indices):
+        print(f"Query: {query}")
+        print(f"Top-{len(top_k)} results:")
+        for i, article_index in enumerate(top_k):
+            print(f"{i}: {retrieved_documents[article_index]}")
+        print("\n")
 
 def main(args):
 
@@ -10,13 +29,19 @@ def main(args):
 
     index = faiss.read_index(args.index_path)
     model = SentenceTransformer(args.model)
-    query = model.encode(query)
+    queries = parse_query_args(args.query, args.dict_key, args.indices)
+    query_embeddings = model.encode(queries)
 
     # Get the search results, D correponding to distances, I corresponding to the ordinal ids of the retrieved documents
-    D, I = index.search(query, args.k_nearest)
+    D, I = index.search(query_embeddings, args.k_nearest)
 
+    # Show the indices of the top-k retrieved documents
     print(I)
+
+    # Show the squared Euclidian (L2) distances (if the index is a IndexFlatL2) of the the top-k retrieved documents 
     print(D)
+
+    show_textual_evaluation(args.query, queries, I)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -25,7 +50,12 @@ if __name__ == "__main__":
     parser.add_argument("index_path",
                         help="Path to the stored index on disk.")
     parser.add_argument("query",
-                        help="Query (a single string) to be encoded.")
+                        help="Query (a single string) to be encoded, or a filename to a JSONL file where strings can be extracted from.")
+    parser.add_argument("--dict_key",
+                        default="text_end",
+                        help="The key to the field that should be extracted if a filename ending with .jsonl is given as the 'query' argument.")
+    parser.add_argument("--indices",
+                        help="Which rows of the JSONL file specified with parameter 'query' to get. (Indexing starting at 0.)")
     parser.add_argument("--k_nearest",
                         type=int,
                         default=3,
