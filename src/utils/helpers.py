@@ -27,7 +27,13 @@ def get_data_as_dict(filename:str, key:str=None, indices:list[int]|set[int]=None
                 data_dict[i] = json.loads(line)[key]
             else:
                 data_dict[i] = json.loads(line)
-    return data_dict  
+    return data_dict
+
+def yield_values_from_text_file(filename):
+    with open(filename) as file:
+        for line in file:
+            if line.strip():
+                yield line.strip()
 
 def do_batching(iterable, batch_size, *, strict=False):
     """Yields batches of given size as lists. If strict=True, raises an error if the length of the iterable is not divisible by batch_size.
