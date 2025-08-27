@@ -5,26 +5,8 @@ from typing import List, Literal
 
 load_dotenv()
 
-# Path to the news data
-NEWS_DATA = os.getenv("NEWS_DATA")
-
-# Path to the directory where embeddings should be saved to
-EMBEDDING_DIR = os.getenv("EMBEDDING_DIR")
-
-# Path to the directory where Faiss Indices should be saved to
-INDEX_DIR = os.getenv("INDEX_DIR")
-
-# Path to the directory where evaluation should be saved to
-EVAL_DIR = os.getenv("EVAL_DIR")
-
-# Path to the file that stores the indices that should be used as queries (indexing starting at 0)
-QUERY_INDICES = os.getenv("QUERY_INDICES")
-
 @dataclass
 class Config:
-
-    def replace_slashes(self):
-        return self.model_name.replace("/", "__")
 
     # Model name
     model_name: str
@@ -32,17 +14,20 @@ class Config:
     # TODO: Add model-appropriate default values
 
     # Filenames
-    news_data_path: str = NEWS_DATA
-    save_embeddings_to: str = f"{EMBEDDING_DIR}/{replace_slashes(model_name)}_embeddings.npy"
-    save_index_to: str = f"{INDEX_DIR}/{replace_slashes(model_name)}_index.faiss"
-    read_query_indices_from = QUERY_INDICES
+    news_data_path: str = os.getenv("NEWS_DATA")
+    read_query_indices_from = os.getenv("QUERY_INDICES")
+
+    # Can only be initialized after the model name is set
+    save_embeddings_to: str = None
+    save_index_to: str = None
+    save_results_to: str = None
 
     # Data extraction
     passage_key: str = "text_end"
     query_key: str = "title"
 
     # Processing
-    batch_size: 32
+    batch_size: int = 32
 
     # Language for stemming (bm25)
     language: str = "finnish"
@@ -53,3 +38,11 @@ class Config:
     # Logging
     verbosity_level: Literal[0, 1, 2, 3] = 3
 
+    def replace_slashes_in_model_name(self):
+        return self.model_name.replace("/", "__")
+
+    # Initialize filenames for saving embeddings array and index
+    def __post_init__(self):
+        self.save_embeddings_to: str = f"{os.getenv("EMBEDDING_DIR")}/{self.replace_slashes_in_model_name()}_embeddings.npy"
+        self.save_index_to: str = f"{os.getenv("INDEX_DIR")}/{self.replace_slashes_in_model_name()}_index.faiss"
+        self.save_results_to: str = f"{os.getenv("EVAL_DIR")}/{self.replace_slashes_in_model_name()}_results.json" # TODO: Modify once the format is decided
