@@ -1,14 +1,13 @@
 import argparse
-from utils.helpers import yield_from_jsonl, get_data_as_dict
+from utils.helpers import yield_from_jsonl, yield_values_from_text_file, get_data_as_dict
 import faiss
 from sentence_transformers import SentenceTransformer
 
 def parse_query_args(query:str, dict_key:str, indices:list|set=None):
 
-    # If the given query argument is a filename
+    # If the given query argument is a path to or a name of a JSONL file
     if query.endswith(".jsonl"):
         return list(yield_from_jsonl(query, dict_key, indices=indices))
-    
     return [query]
 
 def show_textual_evaluation(filename, queries, result_indices):
@@ -23,6 +22,9 @@ def show_textual_evaluation(filename, queries, result_indices):
             print(retrieved_documents[article_index])
             print("\n")
         print("\n")
+
+def query(index, query_embeddings, k_nearest):
+    return index.search(query_embeddings, k_nearest)
 
 def main(args):
 
@@ -43,7 +45,8 @@ def main(args):
     # Show the squared Euclidian (L2) distances (if the index is a IndexFlatL2) of the the top-k retrieved documents 
     print(D)
 
-    show_textual_evaluation(args.query, queries, I)
+    if args.show:
+        show_textual_evaluation(args.query, queries, I)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -64,6 +67,9 @@ if __name__ == "__main__":
                         type=int,
                         default=3,
                         help="How many documents to retrieve.")
+    parser.add_argument("--show",
+                        action="store_true",
+                        help="If the retrieval results should be shown as texts. Should only be used with a small number of queries and a low 'k-nearest' value.")
     args = parser.parse_args()
 
     main(args)
