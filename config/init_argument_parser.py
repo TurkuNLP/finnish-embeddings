@@ -45,4 +45,8 @@ def init_argument_parser():
                         type=int,
                         help="Logging levels given as an int (the higher the number the more detailed the output): 0 (only critical); 1 (warning); 2 (info); 3 (debug)"
                         )
+    parser.add_argument("--test",
+                        action="store_true",
+                        help="If specified, loads test related variables from configuration."
+                        )
     return parser
