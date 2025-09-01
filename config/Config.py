@@ -15,7 +15,7 @@ class Config:
 
     # Filenames
     news_data_path: str = os.getenv("NEWS_DATA")
-    read_query_indices_from = os.getenv("QUERY_INDICES")
+    read_query_indices_from: str = os.getenv("QUERY_INDICES")
 
     # Can only be initialized after the model name is set
     save_embeddings_to: str = None
