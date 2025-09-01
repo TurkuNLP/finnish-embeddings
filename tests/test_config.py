@@ -32,6 +32,18 @@ def test_parse_config():
     assert config.passage_key == custom_passage_key
     assert config.query_key == default_query_key
 
+def test_parse_config_with_overriding_env_variable():
+
+    args = Namespace(
+        model_name="some-awesome-model",
+        read_query_indices_from="some/query/file.txt"
+    )
+
+    config = Config.parse_config(args)
+    
+    assert config.model_name == "some-awesome-model"
+    assert config.read_query_indices_from == "some/query/file.txt"
+
 def test_parse_config_fails_without_model_name():
 
     args = Namespace()
