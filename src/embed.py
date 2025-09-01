@@ -12,16 +12,16 @@ class BatchEmbedder:
     def __init__(self, model_name: str, batch_size: int = 32, **kwargs):
         self.model_name = model_name
         self.batch_size = batch_size
-        self.kwargs = kwargs
+        self.kwargs = kwargs if isinstance(kwargs, dict) else {}
 
-        self.model = self.get_model(model_name, **self.kwargs)
+        self.model = self.get_model()
         self.embedding_dim = self.model.get_sentence_embedding_dimension()  # only for SentenceTransformer
 
-    def get_model(model_name: str, kwargs=None):
-        if model_name.lower() == "bm25" or model_name.lower() == "bm25s":
+    def get_model(self):
+        if self.model_name.lower() == "bm25" or self.model_name.lower() == "bm25s":
             raise NotImplementedError("Currently only supports SentenceTransformer models")
         else:
-            return SentenceTransformer(model_name, **kwargs)
+            return SentenceTransformer(self.model_name, **self.kwargs)
 
     def encode(
             self,
@@ -55,7 +55,7 @@ class BatchEmbedder:
 
             # Process in batches
             num_batches = num_documents // self.batch_size + 1 if num_documents % self.batch_size != 0 else num_documents // self.batch_size
-            for i, batch in enumerate(self._batch_documents(documents, self.batch_size)):
+            for i, batch in enumerate(self._batch_documents(documents)):
                 logger.debug(f"Processing batch {i+1}/{num_batches}")
 
                 # Calculate indices for this batch
@@ -101,8 +101,8 @@ class BatchEmbedder:
         logger.debug(f"Created memory-mapped file with shape: ({num_documents}, {self.embedding_dim})")
         return memmap_file
     
-    def _batch_documents(documents, batch_size):
-        do_batching(documents, batch_size)
+    def _batch_documents(self, documents):
+        return do_batching(documents, self.batch_size)
 
 
 def load_embeddings(filename):

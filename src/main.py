@@ -1,7 +1,7 @@
 from config.init_argument_parser import init_argument_parser
 from config.Config import Config
 import logging
-from .run_pipeline import run_pipeline
+from src.run_pipeline import run_pipeline
 
 def set_up_logger(verbosity_level:int):
     verbosity_levels = {0: logging.CRITICAL, 1: logging.WARNING, 2: logging.INFO, 3: logging.DEBUG}
@@ -21,6 +21,6 @@ if __name__ == "__main__":
     parser = init_argument_parser()
     args = parser.parse_args()
     config = Config.parse_config(args)
-    logger = set_up_logger(config.verbosity)
+    logger = set_up_logger(config.verbosity_level)
 
     main(config)

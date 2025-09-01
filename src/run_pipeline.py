@@ -4,7 +4,7 @@ import logging
 from utils.helpers import yield_values_from_jsonl, yield_values_from_text_file, get_line_count
 from .embed import embed
 from .index import save_index
-from .query import query
+from .query import query, show_textual_evaluation
 
 
 def get_query_indices(filename):
@@ -19,6 +19,7 @@ def run_pipeline(config):
                        documents=data_generator,
                        num_documents=num_documents,
                        batch_size=config.batch_size,
+                       save_to=config.save_embeddings_to,
                        return_embeddings=True)
     
     index = save_index(embeddings, config.save_index_to)
@@ -29,9 +30,16 @@ def run_pipeline(config):
     query_embeddings = embed(model_name=config.model_name,
                              documents=query_generator,
                              num_documents=len(query_indices),
+                             batch_size=config.batch_size,
                              return_embeddings=True)
 
-    D, I = query(index, query_embeddings, config.top_k)
+    max_top_k = max(config.top_k)
+    D, I = query(index, query_embeddings, max_top_k)
+
+    if config.test:
+        show_textual_evaluation(config.news_data_path,
+                                yield_values_from_jsonl(config.news_data_path, config.query_key, indices=query_indices),
+                                I)
 
 
 if __name__ == "__main__":

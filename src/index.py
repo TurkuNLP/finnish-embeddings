@@ -16,9 +16,8 @@ def save_index(embeddings:np.array, save_to:str, return_index:bool=True):
     index.add(embeddings)            # add embedding vectors to the index
     logger.info(f"{index.ntotal} vectors in index")
 
-    index_file = path.join(save_to, "index.faiss")
-    faiss.write_index(index, index_file)
-    logger.info(f"Index saved to {index_file}")
+    faiss.write_index(index, save_to)
+    logger.info(f"Index saved to {save_to}")
 
     if return_index:
         return index
