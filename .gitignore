@@ -215,3 +215,6 @@ __marimo__/
 
 # Outputs
 outputs/
+
+# Results
+results/
