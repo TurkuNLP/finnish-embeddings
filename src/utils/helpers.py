@@ -29,6 +29,16 @@ def get_data_as_dict(filename:str, key:str=None, indices:list[int]|set[int]=None
                 data_dict[i] = json.loads(line)
     return data_dict
 
+def get_query_indices(filename):
+    return [int(value) for value in yield_values_from_text_file(filename)]
+
+def get_query_data_in_order(read_data_from:str, indices:list):
+
+    data_dict = get_data_as_dict(read_data_from, indices)
+    
+    for index in indices:
+        yield data_dict[index]
+
 def yield_values_from_text_file(filename):
     with open(filename) as file:
         for line in file:
@@ -51,3 +61,7 @@ def get_line_count(filename):
     """Counts the number of lines in a file, skipping lines that only contain whitespace."""
     with open(filename) as file:
         return sum(1 for line in file if line.strip())
+    
+def save_to_json(filename, obj:dict):
+    with open(filename, "w") as file:
+        json.dump(obj, file)
