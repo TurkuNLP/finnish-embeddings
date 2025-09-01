@@ -1,7 +1,7 @@
 import argparse
 import logging
 import os
-from utils.helpers import yield_from_jsonl, do_batching, get_line_count
+from utils.helpers import yield_values_from_jsonl, do_batching, get_line_count
 from sentence_transformers import SentenceTransformer
 from sentence_transformers.util.file_io import is_sentence_transformer_model
 import numpy as np
@@ -141,7 +141,7 @@ def main(args):
     model = SentenceTransformer(model_name)
     
     num_documents = get_line_count(data_files) if not k_first else k_first
-    documents = yield_from_jsonl(data_files, dict_key, k_first)
+    documents = yield_values_from_jsonl(data_files, dict_key, k_first)
     encode_in_batches(documents, num_documents, model, embedding_file, batch_size)    
 
 def parse_arguments():

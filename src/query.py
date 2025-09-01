@@ -1,5 +1,5 @@
 import argparse
-from utils.helpers import yield_from_jsonl, yield_values_from_text_file, get_data_as_dict
+from utils.helpers import yield_values_from_jsonl, yield_values_from_text_file, get_data_as_dict
 import faiss
 from sentence_transformers import SentenceTransformer
 
@@ -7,7 +7,7 @@ def parse_query_args(query:str, dict_key:str, indices:list|set=None):
 
     # If the given query argument is a path to or a name of a JSONL file
     if query.endswith(".jsonl"):
-        return list(yield_from_jsonl(query, dict_key, indices=indices))
+        return list(yield_values_from_jsonl(query, dict_key, indices=indices))
     return [query]
 
 def show_textual_evaluation(filename, queries, result_indices):

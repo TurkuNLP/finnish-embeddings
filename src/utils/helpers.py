@@ -1,7 +1,7 @@
 import json
 from itertools import islice
 
-def yield_from_jsonl(filename, key:str=None, first_k:int=None, indices:list[int]|set[int]=None):
+def yield_values_from_jsonl(filename, key:str=None, first_k:int=None, indices:list[int]|set[int]=None):
     if indices and isinstance(indices, list):
         indices = set(indices)
     with open(filename) as file:

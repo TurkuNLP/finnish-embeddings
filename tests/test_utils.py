@@ -1,4 +1,4 @@
-from src.utils.helpers import yield_from_jsonl, get_data_as_dict, do_batching
+from src.utils.helpers import yield_values_from_jsonl, get_data_as_dict, do_batching
 from dotenv import load_dotenv
 import os
 import pytest
@@ -9,21 +9,21 @@ path_to_mock_data = os.getenv("MOCK_DATA")
 
 def test_yield_from_jsonl():
     
-    documents = list(yield_from_jsonl(path_to_mock_data, "text_end"))
+    documents = list(yield_values_from_jsonl(path_to_mock_data, "text_end"))
     assert len(documents) == 10
 
-    titles = list(yield_from_jsonl(path_to_mock_data, "title"))
+    titles = list(yield_values_from_jsonl(path_to_mock_data, "title"))
     assert len(titles) == 10
 
     k_values = [1, 3, 5]
 
     for k in k_values:
-        k_titles = list(yield_from_jsonl(path_to_mock_data, "title", k))
+        k_titles = list(yield_values_from_jsonl(path_to_mock_data, "title", k))
         assert len(k_titles) == k
     
     i_values = [0, 9]
 
-    i_titles = list(yield_from_jsonl(path_to_mock_data, "title", indices=i_values))
+    i_titles = list(yield_values_from_jsonl(path_to_mock_data, "title", indices=i_values))
     assert len(i_titles) == 2
 
 def test_get_data_as_dict():
