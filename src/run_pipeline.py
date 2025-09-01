@@ -23,7 +23,7 @@ def run_pipeline(config:Config):
     index = save_index(embeddings, config.save_index_to)
 
     query_indices = get_query_indices(config.read_query_indices_from)
-    queries = get_query_data_in_order(config.news_data_path, query_indices)
+    queries = get_query_data_in_order(config.news_data_path, config.query_key, query_indices)
 
     query_embeddings = embed(model_name=config.model_name,
                              documents=queries,

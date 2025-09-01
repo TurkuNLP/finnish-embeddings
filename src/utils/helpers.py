@@ -32,9 +32,9 @@ def get_data_as_dict(filename:str, key:str=None, indices:list[int]|set[int]=None
 def get_query_indices(filename):
     return [int(value) for value in yield_values_from_text_file(filename)]
 
-def get_query_data_in_order(read_data_from:str, indices:list):
+def get_query_data_in_order(read_data_from:str, key:str, indices:list):
 
-    data_dict = get_data_as_dict(read_data_from, indices)
+    data_dict = get_data_as_dict(read_data_from, key, indices)
     
     for index in indices:
         yield data_dict[index]
