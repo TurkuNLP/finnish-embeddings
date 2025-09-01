@@ -46,3 +46,11 @@ class Config:
         self.save_embeddings_to: str = f"{os.getenv("EMBEDDING_DIR")}/{self.replace_slashes_in_model_name()}_embeddings.npy"
         self.save_index_to: str = f"{os.getenv("INDEX_DIR")}/{self.replace_slashes_in_model_name()}_index.faiss"
         self.save_results_to: str = f"{os.getenv("EVAL_DIR")}/{self.replace_slashes_in_model_name()}_results.json" # TODO: Modify once the format is decided
+
+    @classmethod
+    def parse_config(cls, args):
+        # Convert args namespace to dict, then filter out None values
+        filtered_args = {k: v for k, v in vars(args).items() if v is not None}
+
+        # Create instance with provided values, falling back to defaults
+        return cls(**filtered_args)

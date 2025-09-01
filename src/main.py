@@ -1,6 +1,6 @@
-import argparse
-import logging
+from config.init_argument_parser import init_argument_parser
 from config.Config import Config
+import logging
 from .run_pipeline import run_pipeline
 
 def set_up_logger(verbosity_level:int):
@@ -8,21 +8,19 @@ def set_up_logger(verbosity_level:int):
     logging.basicConfig(level=verbosity_levels[verbosity_level], force=True)
     return logging.getLogger(__name__)
 
-def log_args(args):
-    logger.info(args)
+def log_args(config):
+    logger.info(config)
 
-def main(args):
+def main(config):
 
-    log_args(args)
-    run_pipeline(args)
+    log_args(config)
+    run_pipeline(config)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("model_name",
-                        help="Which model to use. If using SentenceTransformer, refer to \
-                            https://sbert.net/docs/sentence_transformer/pretrained_models.html for an overview of available models.")
-    args = parser.parse_args()
 
-    config = Config(args.model)
+    parser = init_argument_parser()
+    args = parser.parse_args()
+    config = Config.parse_config(args)
     logger = set_up_logger(config.verbosity)
-    main(args)
+
+    main(config)
