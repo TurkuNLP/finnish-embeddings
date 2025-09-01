@@ -3,7 +3,6 @@ import logging
 import os
 from utils.helpers import yield_values_from_jsonl, do_batching, get_line_count
 from sentence_transformers import SentenceTransformer
-from sentence_transformers.util.file_io import is_sentence_transformer_model
 import numpy as np
 from typing import Generator, Optional
 
@@ -19,12 +18,10 @@ class BatchEmbedder:
         self.embedding_dim = self.model.get_sentence_embedding_dimension()  # only for SentenceTransformer
 
     def get_model(model_name: str, kwargs=None):
-        if is_sentence_transformer_model(model_name):
-            return SentenceTransformer(model_name, **kwargs)
-        elif model_name.lower() == "bm25" or model_name.lower() == "bm25s":
+        if model_name.lower() == "bm25" or model_name.lower() == "bm25s":
             raise NotImplementedError("Currently only supports SentenceTransformer models")
         else:
-            raise NotImplementedError("Currently only supports SentenceTransformer models")
+            return SentenceTransformer(model_name, **kwargs)
 
     def encode(
             self,
