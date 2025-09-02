@@ -33,6 +33,5 @@ def evaluate(result_matrix, top_k_list:list[int], query_indices:list):
 
 def save_evaluation(result_matrix, top_k_list:list[int], query_indices:list, save_to:str):
     evaluation = evaluate(result_matrix, top_k_list, query_indices)
-    logger.info("Results for evaluation:")
-    logger.info(evaluation)
+    logger.info(f"Results for evaluation: {evaluation}")
     save_to_json(save_to, evaluation)
