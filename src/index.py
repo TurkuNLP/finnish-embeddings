@@ -2,18 +2,23 @@ import logging
 import argparse
 import faiss
 import numpy as np
-from os import path
 
 logger = logging.getLogger(__name__)
 
-def save_index(embeddings:np.array, save_to:str, return_index:bool=True):
+def save_index(read_embeddings_from:str, save_to:str, batch_size:int=1000, return_index:bool=True):
 
+    # Load as a memory-mapped file
+    embeddings = np.load(read_embeddings_from, mmap_mode="r")
     logger.debug(f"Going to build an index of shape {embeddings.shape}")
     
+    # Build the index
     dim = embeddings.shape[1]
+    index = faiss.IndexFlatL2(dim)
 
-    index = faiss.IndexFlatL2(dim)   # build the index
-    index.add(embeddings)            # add embedding vectors to the index
+    # Add embedding vectors to the index one batch at a time
+    for i in range(0, dim, batch_size):
+        batch = embeddings[i : i + batch_size]
+        index.add(batch)
     logger.info(f"{index.ntotal} vectors in index")
 
     faiss.write_index(index, save_to)
@@ -24,8 +29,7 @@ def save_index(embeddings:np.array, save_to:str, return_index:bool=True):
 
 def main(args):
 
-    embeddings = np.load(args.read_from)
-    save_index(embeddings, args.save_to, return_index=False)
+    save_index(args.read_from, args.save_to, return_index=False)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
