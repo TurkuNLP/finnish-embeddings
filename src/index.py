@@ -16,9 +16,10 @@ def save_index(read_embeddings_from:str, save_to:str, batch_size:int=1000, retur
     index = faiss.IndexFlatL2(dim)
 
     # Add embedding vectors to the index one batch at a time
-    for i in range(0, dim, batch_size):
+    for batch_num, i in enumerate(range(0, embeddings.size, batch_size), 1):
         batch = embeddings[i : i + batch_size]
         index.add(batch)
+        logger.debug(f"Added batch {batch_num}, index size is now {index.ntotal}")
     logger.info(f"{index.ntotal} vectors in index")
 
     faiss.write_index(index, save_to)
