@@ -15,13 +15,13 @@ def show_textual_evaluation(filename, queries, result_indices):
     retrieved_documents = get_data_as_dict(filename, "text_end", set(result_indices.reshape(-1)))
 
     for query, top_k in zip(queries, result_indices):
-        print(f"Query: {query}")
+        print(f"Query: {query}\n")
         print(f"Top-{len(top_k)} results:")
         for i, article_index in enumerate(top_k, 1):
             print(f"Result {i}:")
             print(retrieved_documents[article_index])
             print("\n")
-        print("\n")
+        print("---")
 
 def query(index, query_embeddings, k_nearest):
     return index.search(query_embeddings, k_nearest)
