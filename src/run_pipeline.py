@@ -2,6 +2,7 @@ from config.init_argument_parser import init_argument_parser
 from config.Config import Config
 import logging
 from utils.helpers import yield_values_from_jsonl, get_line_count, get_query_indices, get_query_data_in_order
+from .run_bm25s import run_bm25s
 from .embed import BatchEmbedder
 from .index import save_index
 from .query import query, show_textual_evaluation
@@ -9,6 +10,17 @@ from .evaluate import save_evaluation
 
 
 def run_pipeline(config:Config):
+
+    if "bm25" in config.model_name:
+        run_bm25s(config.news_data_path,
+                  read_query_indices_from=config.read_query_indices_from,
+                  save_index_to=config.save_index_to,
+                  save_results_to=config.save_results_to,
+                  passage_key=config.passage_key,
+                  query_key=config.query_key,
+                  language=config.language,
+                  top_k=config.top_k)
+        return
 
     num_documents = get_line_count(config.news_data_path)
     data_generator = yield_values_from_jsonl(config.news_data_path, config.passage_key)
