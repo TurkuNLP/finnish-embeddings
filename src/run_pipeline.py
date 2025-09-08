@@ -19,7 +19,7 @@ def run_pipeline(config:Config):
                   passage_key=config.passage_key,
                   query_key=config.query_key,
                   language=config.language,
-                  top_k=config.top_k)
+                  top_k_list=config.top_k)
         return
 
     num_documents = get_line_count(config.news_data_path)

@@ -12,8 +12,9 @@ def run_bm25s(read_from:str,
               passage_key: str = "text_end",
               query_key: str = "title",
               language: str = "finnish",
-              top_k: list[int] = [1, 5]):
-
+              top_k_list: list[int] = [1, 5]):
+    
+    top_k = max(top_k_list)
     query_indices = get_query_indices(read_query_indices_from)
     corpus_len = get_line_count(read_from)
 
@@ -55,6 +56,6 @@ def run_bm25s(read_from:str,
     retrieved_documents = bm25s_retriever.retrieve(queries, k=top_k, return_as="documents")
 
     save_evaluation(result_matrix=retrieved_documents,
-                    top_k_list=top_k,
+                    top_k_list=top_k_list,
                     query_indices=query_indices,
                     save_to=save_results_to)
