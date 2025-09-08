@@ -4,6 +4,7 @@ import logging
 import transformers
 import torch
 from sentence_transformers import SentenceTransformer
+from torch import Tensor
 from src.utils.helpers import do_batching
 
 logger = logging.getLogger(__name__)
@@ -24,6 +25,15 @@ class BatchEmbedder:
             model.eval()
             embedding_dim = model.config.hidden_size
             return tokenizer, model, embedding_dim
+        
+        elif "qwen" in self.model_name:
+            tokenizer = transformers.AutoTokenizer.from_pretrained(self.model_name, padding_side='left')
+            model = transformers.AutoModel.from_pretrained(self.model_name)
+            model.cuda()
+            model.eval()
+            embedding_dim = model.config.hidden_size
+            return tokenizer, model, embedding_dim
+        
         else:
             model = SentenceTransformer(self.model_name)
             return None, model, model.get_sentence_embedding_dimension()
@@ -34,7 +44,12 @@ class BatchEmbedder:
         memmap_file = self.initialize_memmap_file(save_to, num_documents) if save_to else None
         embeddings = np.empty((num_documents, self.embedding_dim), dtype=np.float32) if return_embeddings else None
 
-        batch_processor = self.process_bert_batch if "bert" in self.model_name else self.process_st_batch
+        if "bert" in self.model_name:
+            batch_processor = self.process_bert_batch
+        elif "qwen" in self.model_name:
+            batch_processor = self.process_qwen_batch
+        else:
+            batch_processor = self.process_st_batch
 
         num_batches = num_documents // self.batch_size + 1 if num_documents % self.batch_size != 0 else num_documents // self.batch_size
         for i, batch in enumerate(do_batching(documents, self.batch_size)):
@@ -95,6 +110,34 @@ class BatchEmbedder:
                 return last_hidden_mean.cpu().numpy()
             else:
                 return last_hidden_mean
+            
+    # The implementation is from https://huggingface.co/Qwen/Qwen3-Embedding-8B Transfromers Usage     
+    def process_qwen_batch(self, batch):
+
+        def last_token_pool(last_hidden_states: Tensor,
+                 attention_mask: Tensor) -> Tensor:
+            left_padding = (attention_mask[:, -1].sum() == attention_mask.shape[0])
+            if left_padding:
+                return last_hidden_states[:, -1]
+            else:
+                sequence_lengths = attention_mask.sum(dim=1) - 1
+                batch_size = last_hidden_states.shape[0]
+                return last_hidden_states[torch.arange(batch_size, device=last_hidden_states.device), sequence_lengths]
+            
+        max_length = 8192
+        data = self.tokenizer(
+            batch,
+            padding=True,
+            truncation=True,
+            max_length=max_length,
+            return_tensors="pt",
+        )
+        data.to(self.model.device)
+
+        with torch.no_grad():
+            outputs = self.model(**data)
+            embeddings = last_token_pool(outputs.last_hidden_state, data["attention_mask"])
+            return embeddings.cpu().numpy()
 
     def initialize_memmap_file(self, output_file, num_documents):
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
