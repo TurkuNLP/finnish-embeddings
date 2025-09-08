@@ -47,16 +47,24 @@ class Config:
     # Initialize filenames for saving embeddings array and index
     def __post_init__(self):
 
-        if not self.test:
+        if "bm25" in self.model_name:
+            if self.test:
+                self.save_index_to: str = f'{os.getenv("TEST_DIR")}/{self.replace_slashes_in_model_name()}/index/'
+                self.save_results_to: str = f'{os.getenv("TEST_DIR")}/{self.replace_slashes_in_model_name()}/results_test.json' # TODO: Modify once the format is decided
+            else:
+                self.save_index_to: str = f'{os.getenv("INDEX_DIR")}/{self.replace_slashes_in_model_name()}/index/'
+                self.save_results_to: str = f'{os.getenv("EVAL_DIR")}/{self.replace_slashes_in_model_name()}_results.json' # TODO: Modify once the format is decided
+            return
+
+        if self.test:
+            self.save_embeddings_to: str = f'{os.getenv("TEST_DIR")}/{self.replace_slashes_in_model_name()}/embeddings_test.npy'
+            self.save_index_to: str = f'{os.getenv("TEST_DIR")}/{self.replace_slashes_in_model_name()}/index_test.faiss'
+            self.save_results_to: str = f'{os.getenv("TEST_DIR")}/{self.replace_slashes_in_model_name()}/results_test.json' # TODO: Modify once the format is decided
+
+        else:
             self.save_embeddings_to: str = f'{os.getenv("EMBEDDING_DIR")}/{self.replace_slashes_in_model_name()}_embeddings.npy'
             self.save_index_to: str = f'{os.getenv("INDEX_DIR")}/{self.replace_slashes_in_model_name()}_index.faiss'
             self.save_results_to: str = f'{os.getenv("EVAL_DIR")}/{self.replace_slashes_in_model_name()}_results.json' # TODO: Modify once the format is decided
-
-        # Load 
-        else:
-            self.save_embeddings_to: str = f'{os.getenv("TEST_DIR")}/{self.replace_slashes_in_model_name()}_embeddings_test.npy'
-            self.save_index_to: str = f'{os.getenv("TEST_DIR")}/{self.replace_slashes_in_model_name()}_index_test.faiss'
-            self.save_results_to: str = f'{os.getenv("TEST_DIR")}/{self.replace_slashes_in_model_name()}_results_test.json' # TODO: Modify once the format is decided
 
     @classmethod
     def parse_config(cls, args):
