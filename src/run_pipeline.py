@@ -11,52 +11,51 @@ from .evaluate import save_evaluation, show_textual_evaluation
 
 def run_pipeline(config:Config):
 
-    if "bm25" in config.model_name:
-        run_bm25s(config.news_data_path,
-                  read_query_indices_from=config.read_query_indices_from,
-                  save_index_to=config.save_index_to,
-                  save_results_to=config.save_results_to,
-                  passage_key=config.passage_key,
-                  query_key=config.query_key,
-                  language=config.language,
-                  top_k_list=config.top_k)
-        return
-
+    # Initialize generators for passages and queries
     num_documents = get_line_count(config.news_data_path)
     data_generator = yield_values_from_jsonl(config.news_data_path, config.passage_key)
 
-    batch_embedder = BatchEmbedder(model_name=config.model_name,
-                                   batch_size=config.batch_size)
-
-    batch_embedder.encode(documents=data_generator,
-                          num_documents=num_documents,
-                          save_to=config.save_embeddings_to,
-                          )
-    
-    index = save_index(read_embeddings_from=config.save_embeddings_to,
-                       save_to=config.save_index_to)
-
     query_indices = get_query_indices(config.read_query_indices_from)
-    queries = get_query_data_in_order(config.news_data_path, config.query_key, query_indices)
+    query_generator = get_query_data_in_order(config.news_data_path, config.query_key, query_indices)
 
-    query_embeddings = batch_embedder.encode(documents=queries,
-                                             num_documents=len(query_indices),
-                                             return_embeddings=True
-                                             )
+    if "bm25" in config.model_name:
+        result_matrix = run_bm25s(passages=data_generator,
+                                  corpus_len=num_documents,
+                                  queries=query_generator,
+                                  save_index_to=config.save_index_to,
+                                  top_k_list=config.top_k,
+                                  language=config.language)
 
-    max_top_k = max(config.top_k)
-    D, I = query(index, query_embeddings, max_top_k)
+    else:
+        batch_embedder = BatchEmbedder(model_name=config.model_name,
+                                    batch_size=config.batch_size)
+
+        batch_embedder.encode(documents=data_generator,
+                            num_documents=num_documents,
+                            save_to=config.save_embeddings_to,
+                            )
+        
+        index = save_index(read_embeddings_from=config.save_embeddings_to,
+                        save_to=config.save_index_to)
+
+        query_embeddings = batch_embedder.encode(documents=query_generator,
+                                                num_documents=len(query_indices),
+                                                return_embeddings=True
+                                                )
+
+        max_top_k = max(config.top_k)
+        _, result_matrix = query(index, query_embeddings, max_top_k)
     
-    save_evaluation(result_matrix=I,
+    save_evaluation(result_matrix=result_matrix,
                     top_k_list=config.top_k,
                     query_indices=query_indices,
                     save_to=config.save_results_to)
     
-    # Show the queries and retrieved articles for the n first queries
-    first_n = 5
-    subset_for_textual_evaluation = I[:first_n]
+    # Show the queries and retrieved articles for the k first queries
+    eval_queries = list(get_query_data_in_order(config.news_data_path, config.query_key, query_indices[:config.first_k]))
+    subset_for_textual_evaluation = result_matrix[:config.first_k]
     show_textual_evaluation(config.news_data_path,
-                            queries[:first_n],
+                            eval_queries,
                             subset_for_textual_evaluation)
 
 

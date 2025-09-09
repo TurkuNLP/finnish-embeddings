@@ -1,5 +1,6 @@
 import json
 from itertools import islice
+from typing import Iterable
 
 def yield_values_from_jsonl(filename, key:str=None, first_k:int=None, indices:list[int]|set[int]=None):
     if indices and isinstance(indices, list):
@@ -17,7 +18,7 @@ def yield_values_from_jsonl(filename, key:str=None, first_k:int=None, indices:li
 
 def get_data_as_dict(filename:str, key:str=None, indices:list[int]|set[int]=None):
     data_dict = {}
-    if indices and isinstance(indices, list):
+    if indices and not isinstance(indices, set):
         indices = set(indices)
     with open(filename) as file:
         for i, line in enumerate(file):
@@ -38,7 +39,7 @@ def get_corpus_as_dict(filename, id_key="url") -> dict:
 def get_query_indices(filename):
     return [int(value) for value in yield_values_from_text_file(filename)]
 
-def get_query_data_in_order(read_data_from:str, key:str, indices:list):
+def get_query_data_in_order(read_data_from:str, key:str, indices:Iterable[int]):
 
     data_dict = get_data_as_dict(read_data_from, key, indices)
     

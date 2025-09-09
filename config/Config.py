@@ -32,8 +32,9 @@ class Config:
     # Language for stemming (bm25)
     language: str = "finnish"
 
-    # How many articles to retrieve in evaluation
-    top_k: List[int] = field(default_factory=lambda: [1, 5])
+    # Evaluation
+    top_k: List[int] = field(default_factory=lambda: [1, 5]) # How many articles to retrieve in evaluation
+    first_k : int = 5 # How many retrieval results to show in text
 
     # Logging
     verbosity_level: Literal[0, 1, 2, 3] = 3

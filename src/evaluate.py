@@ -1,4 +1,5 @@
 import logging
+from typing import Iterable
 from src.utils.helpers import save_to_json, get_data_as_dict
 
 logger = logging.getLogger(__name__)
@@ -31,7 +32,20 @@ def evaluate(result_matrix, top_k_list:list[int], query_indices:list):
     
     return {f"recall_at_{k}": count_recall(v, len(index_map)) for k, v in recall_evaluation_counts.items()}
 
-def show_textual_evaluation(filename:str, queries, result_indices):
+def show_textual_evaluation(filename:str, queries:Iterable[str], result_indices):
+    """Gets the data corresponding to the result indices and prints it against the queries.
+    
+    Parameters
+    ----------
+    filename : str
+        The file where to get the data from.
+    queries : Iterable[str]
+        Queries in the same order than when searching the index.
+    result_indices : np.array
+        The array (or a subset of it) returned by the Faiss IndexFlatL2,
+        each row representing the indices of the retrieved documents.
+        Row number corresponds to the index of the queries.
+    """
 
     retrieved_documents = get_data_as_dict(filename, "text_end", set(result_indices.reshape(-1)))
 
