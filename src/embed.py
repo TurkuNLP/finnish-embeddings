@@ -39,7 +39,7 @@ class BatchEmbedder:
             return None, model, model.get_sentence_embedding_dimension()
 
     def encode(self, documents, num_documents, save_to=None, return_embeddings=False):
-        logger.debug(f"Model type: {'BERT' if 'bert' in self.model_name else 'SentenceTransformer'}")
+        logger.debug(f"Arguments passed for encode function: save_to={save_to}, return_embeddings={return_embeddings}")
         
         memmap_file = self.initialize_memmap_file(save_to, num_documents) if save_to else None
         embeddings = np.empty((num_documents, self.embedding_dim), dtype=np.float32) if return_embeddings else None
@@ -72,6 +72,8 @@ class BatchEmbedder:
 
             if i % 10 == 0 and memmap_file is not None:
                 memmap_file.flush()
+
+            del embedding_batch # Remove reference to batch before a new batch is processed
 
         if memmap_file is not None:
             memmap_file.flush()
