@@ -5,8 +5,8 @@ from utils.helpers import yield_values_from_jsonl, get_line_count, get_query_ind
 from .run_bm25s import run_bm25s
 from .embed import BatchEmbedder
 from .index import save_index
-from .query import query, show_textual_evaluation
-from .evaluate import save_evaluation
+from .query import query
+from .evaluate import save_evaluation, show_textual_evaluation
 
 
 def run_pipeline(config:Config):
@@ -46,16 +46,18 @@ def run_pipeline(config:Config):
 
     max_top_k = max(config.top_k)
     D, I = query(index, query_embeddings, max_top_k)
-
-    if config.test:
-        show_textual_evaluation(config.news_data_path,
-                                yield_values_from_jsonl(config.news_data_path, config.query_key, indices=query_indices),
-                                I)
     
     save_evaluation(result_matrix=I,
                     top_k_list=config.top_k,
                     query_indices=query_indices,
                     save_to=config.save_results_to)
+    
+    # Show the queries and retrieved articles for the n first queries
+    first_n = 5
+    subset_for_textual_evaluation = I[:first_n]
+    show_textual_evaluation(config.news_data_path,
+                            queries[:first_n],
+                            subset_for_textual_evaluation)
 
 
 if __name__ == "__main__":
