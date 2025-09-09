@@ -29,6 +29,12 @@ def get_data_as_dict(filename:str, key:str=None, indices:list[int]|set[int]=None
                 data_dict[i] = json.loads(line)
     return data_dict
 
+def get_corpus_as_dict(filename, id_key="url") -> dict:
+    """Returns the news articles as a dict, where the keys are the ids of the articles. The id key defaults to 'url'.
+    Expects a jsonl file, where each line corresponds to an article and its metadata."""
+    news = yield_values_from_jsonl(filename)
+    return {item[id_key]: item for item in news}
+
 def get_query_indices(filename):
     return [int(value) for value in yield_values_from_text_file(filename)]
 

@@ -14,7 +14,7 @@ class Config:
     # TODO: Add model-appropriate default values
 
     # Filenames
-    news_data_path: str = os.getenv("NEWS_DATA")
+    news_data_path: str = os.getenv("NEWS_DATA_SORTED_BY_LEN")
     read_query_indices_from: str = os.getenv("QUERY_INDICES")
 
     # Can only be initialized after the model name is set
