@@ -28,8 +28,7 @@ class BatchEmbedder:
         
         elif "qwen" in self.model_name:
             tokenizer = transformers.AutoTokenizer.from_pretrained(self.model_name, padding_side='left')
-            model = transformers.AutoModel.from_pretrained(self.model_name)
-            model.cuda()
+            model = transformers.AutoModel.from_pretrained(self.model_name, device_map="auto")
             model.eval()
             embedding_dim = model.config.hidden_size
             return tokenizer, model, embedding_dim
@@ -134,7 +133,6 @@ class BatchEmbedder:
             max_length=max_length,
             return_tensors="pt",
         )
-        data.to(self.model.device)
 
         with torch.no_grad():
             outputs = self.model(**data)
