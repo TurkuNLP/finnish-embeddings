@@ -36,6 +36,10 @@ def init_argument_parser():
                         type=int,
                         help="How many documents should be encoded simultaneously."
                         )
+    parser.add_argument("--max_tokens_per_batch",
+                        type=int,
+                        help="How many tokens should be fit into one batch."
+                        )
     parser.add_argument("--top_k",
                         type=int,
                         help="How many documents to retrieve."

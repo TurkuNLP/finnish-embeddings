@@ -28,6 +28,7 @@ class Config:
 
     # Processing
     batch_size: int = 32
+    max_tokens_per_batch: int = 40000
 
     # Language for stemming (bm25)
     language: str = "finnish"
