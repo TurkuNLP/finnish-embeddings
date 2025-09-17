@@ -13,6 +13,11 @@ def count_recall(hits:int, total:int):
 # Note! Half-hard-coded to count recall at 1 and 5
 def evaluate(result_matrix, top_k_list:list[int], query_indices:list):
 
+    logger.debug("Result matrix preview:")
+    logger.debug(result_matrix[:5])
+    logger.debug("Query indices preview:")
+    logger.debug(query_indices[:10])
+
     index_map = map_query_indices(query_indices)
 
     assert result_matrix.shape[0] == len(index_map), f"The number of rows in result matrix ({result_matrix.shape[0]} is different than the number of indices in index_map ({len(index_map)}))"
@@ -50,13 +55,14 @@ def show_textual_evaluation(filename:str, queries:Iterable[str], result_indices)
     retrieved_documents = get_data_as_dict(filename, "text_end", set(result_indices.reshape(-1)))
 
     for query, top_k_row in zip(queries, result_indices):
-        print(f"Query: {query}\n")
+        print()
+        print(f"Query: {query}")
         print(f"Top-{len(top_k_row)} results:")
         for i, article_index in enumerate(top_k_row, 1):
             print(f"Result {i}:")
-            print(retrieved_documents[article_index])
+            print(f"{retrieved_documents[article_index][:1000]}... (continues)") # only show a preview of the article
             print()
-        print("---")
+        print("-"*30)
 
 def save_evaluation(result_matrix, top_k_list:list[int], query_indices:list, save_to:str):
     evaluation = evaluate(result_matrix, top_k_list, query_indices)
