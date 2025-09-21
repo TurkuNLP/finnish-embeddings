@@ -47,8 +47,16 @@ class BatchEmbedder:
             tokenizer = transformers.AutoTokenizer.from_pretrained(self.model_name, padding_side='left')
             model = transformers.AutoModel.from_pretrained(self.model_name, quantization_config=quantization_config, device_map=self._set_device_map())
             model.eval()
-            embedding_dim = model.config.hidden_size
+            embedding_dim = model.config.hidden_size # expected: 4096
             max_length = 8192
+            return tokenizer, model, embedding_dim, max_length
+        
+        elif "multilingual-e5" in self.model_name:
+            tokenizer = transformers.AutoTokenizer.from_pretrained(self.model_name)
+            model = transformers.AutoModel.from_pretrained(self.model_name, device_map=self._set_device_map())
+            model.eval()
+            embedding_dim = model.config.hidden_size # expected: 1024
+            max_length = 512
             return tokenizer, model, embedding_dim, max_length
         
         else:
@@ -94,7 +102,7 @@ class BatchEmbedder:
             yield current_batch
 
     def _do_batching(self, documents, num_documents):
-        if "qwen" in self.model_name:
+        if "qwen" in self.model_name or "multilingual-e5" in self.model_name:
             logger.info(f"Going to do dynamic batching with max estimated token count per batch {self.max_tokens_per_batch}")
             return self.batch_based_on_token_count(documents, num_documents, self.max_tokens_per_batch)
         else:
@@ -107,16 +115,20 @@ class BatchEmbedder:
         memmap_file = self.initialize_memmap_file(save_to, num_documents) if save_to else None
         embeddings = np.empty((num_documents, self.embedding_dim), dtype=np.float32) if return_embeddings else None
 
+        #TODO: Error prone, could specify this already at initialization time
         if "bert" in self.model_name:
             batch_processor = self.process_bert_batch
         elif "qwen" in self.model_name:
             batch_processor = self.process_qwen_batch
+        elif "multilingual-e5" in self.model_name:
+            batch_processor = self.process_e5_batch
         else:
             # Wrap with SentenceTransformer
             batch_processor = self.process_st_batch
 
+        # TODO: This should also be defined based on if dynamic or static batching is used
         num_batches = num_documents // self.batch_size + 1 if num_documents % self.batch_size != 0 else num_documents // self.batch_size
-        if "qwen" in self.model_name:
+        if "qwen" in self.model_name or "multilingual-e5" in self.model_name:
             num_batches = "unknown"
         
         # As the batch sizes may vary, keep track of the current indices
@@ -224,13 +236,16 @@ class BatchEmbedder:
         memory_per_token, memory_used = self.estimate_memory_per_token(initial_mem_use, num_tokens)
 
         # Calculate maximum tokens based on available memory
-        max_tokens = int((memory_info["available"] +  memory_used) / memory_per_token)
+        try:
+            max_tokens = int((memory_info["available"] +  memory_used) / memory_per_token)
 
-        # Only use 90% of the estimated max capacity
-        max_tokens = int(max_tokens * 0.9)
+            # Only use 90% of the estimated max capacity
+            max_tokens = int(max_tokens * 0.9)
 
-        logger.debug(f"Estimated max tokens (with 10% memory buffer): {max_tokens}")
-        return max_tokens
+            logger.debug(f"Estimated max tokens (with 10% memory buffer): {max_tokens}")
+        
+        except ZeroDivisionError:
+            logger.warning(f"ZeroDivisionError when calculating ({memory_info["available"]} + {memory_used}) / {memory_per_token} (memory used divided with memory_per_token)")
 
     def process_st_batch(self, batch):
         return self.model.encode(batch, batch_size=self.batch_size)
@@ -294,11 +309,11 @@ class BatchEmbedder:
             embeddings = self._last_token_pool(outputs.last_hidden_state, inputs["attention_mask"])
             return embeddings.cpu().numpy()
 
-
     # The implementation is based on https://huggingface.co/Qwen/Qwen3-Embedding-8B Transfromers Usage (now split into multiple functions)
     def process_qwen_batch(self, batch):
 
         # Clear cache and reset memory stats
+        # TODO: are these okay to be here for each iteration?
         torch.cuda.empty_cache()
         torch.cuda.reset_peak_memory_stats()
     
@@ -320,6 +335,51 @@ class BatchEmbedder:
 
         # Otherwise, encode the full batch
         return self.get_embeddings(data, initial_memory_info)
+     
+    def _tokenize_with_e5(self, batch):
+        return self.tokenizer(
+            batch,
+            padding=True,
+            truncation=True,
+            max_length=self.max_length,
+            return_tensors="pt",
+        ).to(self.model.device) # assumes a single GPU is being used
+
+    def _average_pool(self, last_hidden_states: Tensor, attention_mask: Tensor) -> Tensor:
+        last_hidden = last_hidden_states.masked_fill(~attention_mask[..., None].bool(), 0.0)
+        return last_hidden.sum(dim=1) / attention_mask.sum(dim=1)[..., None]
+
+    def process_e5_batch(self, batch):
+
+        torch.cuda.empty_cache()
+
+        data = self._tokenize_with_e5(batch)
+
+        if self.test:
+            initial_memory_info = self.get_available_memory("Memory use after tokenization")
+        else:
+            initial_memory_info = None
+
+        # Check the total number of tokens after tokenization and split the batch to half
+        # TODO: Could be one function instead of a copy from process_qwen_batch
+        if data.input_ids.numel() > self.max_tokens_per_batch:
+            logger.warning(f"Number of tokens ({data.input_ids.numel()}) exceeds the given max token limit ({self.max_tokens_per_batch}). Attempting to split the current batch and re-tokenizing before moving tensors to GPU.")
+            del data
+            half = len(batch) // 2
+            first_embeddings = self.get_embeddings(self._tokenize_with_e5(batch[:half]), initial_memory_info)
+            second_embeddings = self.get_embeddings(self._tokenize_with_e5(batch[half:]), initial_memory_info)
+            return np.vstack([first_embeddings, second_embeddings])
+
+        with torch.no_grad():
+            outputs = self.model(**data)
+
+            if self.test:
+                memory_info = self.get_available_memory("Memory use after embedding")
+                self.calculate_max_tokens(memory_info, initial_memory_info["allocated"], data.input_ids.numel())
+
+            embeddings = self._average_pool(outputs.last_hidden_state, data['attention_mask'])
+            
+            return embeddings.cpu().numpy()
 
     def initialize_memmap_file(self, output_file, num_documents):
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
