@@ -127,10 +127,11 @@ class BatchEmbedder:
             batch_processor = self.process_st_batch
 
         # TODO: This should also be defined based on if dynamic or static batching is used
-        num_batches = num_documents // self.batch_size + 1 if num_documents % self.batch_size != 0 else num_documents // self.batch_size
-        if "qwen" in self.model_name or "multilingual-e5" in self.model_name:
+        if num_batches <= 0 or "qwen" in self.model_name or "multilingual-e5" in self.model_name:
             num_batches = "unknown"
-        
+        else:
+            num_batches = num_documents // self.batch_size + 1 if num_documents % self.batch_size != 0 else num_documents // self.batch_size
+
         # As the batch sizes may vary, keep track of the current indices
         start_idx = 0
         end_idx = 0
