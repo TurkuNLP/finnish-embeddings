@@ -14,7 +14,7 @@ def count_recall(hits:int, total:int):
 def evaluate(result_matrix, top_k_list:list[int], query_indices:list):
 
     logger.debug("Result matrix preview:")
-    logger.debug(result_matrix[:5])
+    logger.debug(result_matrix[:10])
     logger.debug("Query indices preview:")
     logger.debug(query_indices[:10])
 
