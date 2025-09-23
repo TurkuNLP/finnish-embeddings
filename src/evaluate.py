@@ -13,10 +13,8 @@ def count_recall(hits:int, total:int):
 # Note! Half-hard-coded to count recall at 1 and 5
 def evaluate(result_matrix, top_k_list:list[int], query_indices:list):
 
-    logger.debug("Result matrix preview:")
-    logger.debug(result_matrix[:10])
-    logger.debug("Query indices preview:")
-    logger.debug(query_indices[:10])
+    logger.debug(f"Result matrix preview:\n{result_matrix[:10]}")
+    logger.debug(f"Query indices preview:\n{query_indices[:10]}")
 
     index_map = map_query_indices(query_indices)
 
@@ -60,7 +58,10 @@ def show_textual_evaluation(filename:str, queries:Iterable[str], result_indices)
         print(f"Top-{len(top_k_row)} results:")
         for i, article_index in enumerate(top_k_row, 1):
             print(f"Result {i}:")
-            print(f"{retrieved_documents[article_index][:1000]}... (continues)") # only show a preview of the article
+            if len(retrieved_documents[article_index]) > 1000:
+                print(f"{retrieved_documents[article_index][:1000]}... (continues)") # only show a preview of the article
+            else:
+                print(f"{retrieved_documents[article_index]}")
             print()
         print("-"*30)
 
