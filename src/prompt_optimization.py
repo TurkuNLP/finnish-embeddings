@@ -66,8 +66,13 @@ if __name__ == "__main__":
     PROMPT_EVAL_DIR = os.getenv("PROMPT_EVAL_DIR")
 
     task_descriptions = {
-        "eng": "Given a news title, retrieve the article corresponding to it",
-        "fin": "Hae uutisotsikkoa vastaava artikkeli"
+        "eng_1": "Given a news title, retrieve the article corresponding to it",
+        "eng_2": "Given a news title, retrieve the article that is the correct pair for the given title",
+        "eng_3": "Given a news title, retrieve the article that best corresponds to the given title",
+        "eng_4": "Retrieve the relevant article for the given news title",
+        "fin_1": "Hae uutisotsikkoa vastaava artikkeli",
+        "fin_2": "Hae oikea artikkeli, joka kuuluu seuraavalle uutisotsikolle",
+        "fin_3": "Löydä seuraavalle uutisotsikolle kuuluva artikkeli"
     }
 
     titles = list(yield_dev_titles(DATA_PATH))
@@ -90,8 +95,14 @@ if __name__ == "__main__":
         task_configs = {
             "no_instruction": {"task_description": None, "use_fin": False},
             "default_eng": {"task_description": config.default_prompt, "use_fin": False},
-            "custom_eng": {"task_description": config.custom_prompts["eng"], "use_fin": False},
-            "custom_fin": {"task_description": config.custom_prompts["fin"], "use_fin": True}
+            "custom_eng_1": {"task_description": config.custom_prompts["eng_1"], "use_fin": False},
+            "custom_eng_2": {"task_description": config.custom_prompts["eng_2"], "use_fin": False},
+            "custom_eng_3": {"task_description": config.custom_prompts["eng_3"], "use_fin": False},
+            "custom_eng_4": {"task_description": config.custom_prompts["eng_4"], "use_fin": False},
+            "custom_fin": {"task_description": config.custom_prompts["fin_1"], "use_fin": True},
+            "custom_fin_1": {"task_description": config.custom_prompts["fin_1"], "use_fin": False},
+            "custom_fin_2": {"task_description": config.custom_prompts["fin_2"], "use_fin": False},
+            "custom_fin_3": {"task_description": config.custom_prompts["fin_3"], "use_fin": False}
         }
         
         for task_config_name, config_values in task_configs.items():
@@ -109,10 +120,9 @@ if __name__ == "__main__":
 
             _, result_matrix = query(index, embedded_titles, max(top_k_list))
 
-            logger.info(f"Getting the results for {task_config_name}")
             save_to = os.path.join(PROMPT_EVAL_DIR, f"{config.model_name.replace("/", "__")}_{task_config_name}_results.json")
             save_evaluation(result_matrix, top_k_list, title_indices, save_to)
-            logger.info(f"Results saved to {save_to}")
+            logger.info(f"Results for {config.model_name} with prompt {task_config_name} saved to {save_to}")
         
         del batch_embedder # clear memory before using another model
 
