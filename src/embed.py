@@ -8,7 +8,7 @@ import torch
 from sentence_transformers import SentenceTransformer
 from torch import Tensor
 import tiktoken
-from src.utils.helpers import do_batching
+from src.utils.helpers import do_batching, yield_titles_with_instructions
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +24,7 @@ class BatchEmbedder:
         self.test = kwargs.get("test", False)
         self.tokenizer, self.model, self.embedding_dim, self.max_length = self.get_model_and_tokenizer()
         self.encoding = get_tiktoken_encoding()
+        self.prompt = self.get_prompt()
 
         # Print model placement and memory statistics
         self.check_devices()
@@ -62,6 +63,14 @@ class BatchEmbedder:
         else:
             model = SentenceTransformer(self.model_name)
             return None, model, model.get_sentence_embedding_dimension(), None #TODO: max_length?
+
+    def get_prompt(self):
+        if "qwen" in self.model_name:
+            return "Hae oikea artikkeli, joka kuuluu seuraavalle uutisotsikolle"
+        elif "multilingual-e5" in self.model_name:
+            return "Retrieve the relevant article for the given news title"
+        else:
+            return ""
         
     def batch_based_on_token_count(self, documents: Iterable[str], num_documents: int, max_tokens:int):
 
@@ -109,6 +118,10 @@ class BatchEmbedder:
             logger.info(f"Going to use static batch size of {self.batch_size}")
             return do_batching(documents, self.batch_size)
 
+    def encode_queries(self, documents, num_documents, save_to=None, return_embeddings=False):
+        documents_with_instruction = yield_titles_with_instructions(documents, task_description=self.prompt)
+        return self.encode(documents_with_instruction, num_documents, save_to, return_embeddings)
+
     def encode(self, documents, num_documents, save_to=None, return_embeddings=False):
         logger.debug(f"Arguments passed for encode function: save_to={save_to}, return_embeddings={return_embeddings}")
         
@@ -127,7 +140,7 @@ class BatchEmbedder:
             batch_processor = self.process_st_batch
 
         # TODO: This should also be defined based on if dynamic or static batching is used
-        if num_batches <= 0 or "qwen" in self.model_name or "multilingual-e5" in self.model_name:
+        if self.batch_size <= 0 or "qwen" in self.model_name or "multilingual-e5" in self.model_name:
             num_batches = "unknown"
         else:
             num_batches = num_documents // self.batch_size + 1 if num_documents % self.batch_size != 0 else num_documents // self.batch_size
