@@ -66,6 +66,8 @@ if __name__ == "__main__":
     PROMPT_EVAL_DIR = os.getenv("PROMPT_EVAL_DIR")
 
     task_descriptions = {
+        "eng_web_search": "Given a web search query, retrieve relevant passages that answer the query",
+        "eng_sts": "Retrieve semantically similar text",
         "eng_1": "Given a news title, retrieve the article corresponding to it",
         "eng_2": "Given a news title, retrieve the article that is the correct pair for the given title",
         "eng_3": "Given a news title, retrieve the article that best corresponds to the given title",
@@ -95,11 +97,13 @@ if __name__ == "__main__":
         task_configs = {
             "no_instruction": {"task_description": None, "use_fin": False},
             "default_eng": {"task_description": config.default_prompt, "use_fin": False},
+            "eng_web_search": {"task_description": config.custom_prompts["eng_web_search"], "use_fin": False},
+            "eng_sts": {"task_description": config.custom_prompts["eng_sts"], "use_fin": False},
             "custom_eng_1": {"task_description": config.custom_prompts["eng_1"], "use_fin": False},
             "custom_eng_2": {"task_description": config.custom_prompts["eng_2"], "use_fin": False},
             "custom_eng_3": {"task_description": config.custom_prompts["eng_3"], "use_fin": False},
             "custom_eng_4": {"task_description": config.custom_prompts["eng_4"], "use_fin": False},
-            "custom_fin": {"task_description": config.custom_prompts["fin_1"], "use_fin": True},
+            "fin_prefix": {"task_description": config.custom_prompts["fin_1"], "use_fin": True},
             "custom_fin_1": {"task_description": config.custom_prompts["fin_1"], "use_fin": False},
             "custom_fin_2": {"task_description": config.custom_prompts["fin_2"], "use_fin": False},
             "custom_fin_3": {"task_description": config.custom_prompts["fin_3"], "use_fin": False}
