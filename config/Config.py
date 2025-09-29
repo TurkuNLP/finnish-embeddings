@@ -14,8 +14,8 @@ class Config:
     # TODO: Add model-appropriate default values
 
     # Filenames
-    news_data_path: str = os.getenv("NEWS_DATA_SORTED_BY_LEN")
-    read_query_indices_from: str = os.getenv("QUERY_INDICES")
+    news_data_path: str = os.getenv("NEWS_DATA_DEVTEST")
+    read_query_indices_from: str = os.getenv("QUERY_INDICES_TEST")
 
     # Can only be initialized after the model name is set
     save_embeddings_to: str = None
@@ -42,6 +42,9 @@ class Config:
 
     # If test configuration should be used
     test: bool = False
+
+    # If article embeddings should be loaded from disk and only queries should be embedded
+    final: bool = False
 
     def replace_slashes_in_model_name(self):
         return self.model_name.replace("/", "__")

@@ -53,4 +53,8 @@ def init_argument_parser():
                         action="store_true",
                         help="If specified, loads test related variables from configuration."
                         )
+    parser.add_argument("--final",
+                        action="store_true",
+                        help="If specified, loads a pre-built index for the given model and only embeds the queries."
+                        )
     return parser
