@@ -72,3 +72,28 @@ def get_line_count(filename):
 def save_to_json(filename, obj:dict):
     with open(filename, "w") as file:
         json.dump(obj, file)
+
+def get_detailed_instruct(*, task_description: str, query: str, use_fin: bool = False) -> str:
+    if task_description == "":
+        return query
+    if use_fin:
+        return f"Ohje: {task_description}\nUutisotsikko: {query}"
+    return f"Instruct: {task_description}\nQuery: {query}"
+
+def yield_titles_with_instructions(titles: list[str], task_description: str = None, use_fin: bool = False):
+    for title in titles:
+        yield get_detailed_instruct(task_description=task_description, query=title, use_fin=use_fin)
+
+def yield_dev_titles(filename, query_key="title"):
+    with open(filename) as file:
+        for line in file:
+            obj = json.loads(line)
+            if obj["split"] == "dev":
+                yield obj[query_key]
+
+def yield_dev_indices(filename):
+    with open(filename) as file:
+        for i, line in enumerate(file):
+            obj = json.loads(line)
+            if obj["split"] == "dev":
+                yield i
