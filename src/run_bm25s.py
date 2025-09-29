@@ -6,6 +6,7 @@ import bm25s
 def run_bm25s(passages:Iterable[str],
               corpus_len: int,
               queries: Iterable[str],
+              queries_len: int,
               save_index_to: str,
               top_k_list: list[int],
               language: str):
@@ -30,7 +31,7 @@ def run_bm25s(passages:Iterable[str],
         # Tokenize the queries
         query_tokenized = tokenizer.tokenize(queries,
                                              return_as="tuple",
-                                             length=corpus_len,
+                                             length=queries_len,
                                              update_vocab=False) # explicitly make sure that vocabulary is not updated
 
         # Index the corpus
