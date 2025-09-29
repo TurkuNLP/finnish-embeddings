@@ -28,6 +28,9 @@ def save_index(read_embeddings_from:str, save_to:str, batch_size:int=1000, retur
     if return_index:
         return index
 
+def load_index(read_index_from:str):
+    return faiss.read_index(read_index_from)
+
 def main(args):
 
     save_index(args.read_from, args.save_to, return_index=False)
