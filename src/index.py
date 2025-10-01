@@ -1,3 +1,4 @@
+from config.init_logger import set_up_logger
 import logging
 import argparse
 import faiss
@@ -7,17 +8,19 @@ logger = logging.getLogger(__name__)
 
 def save_index(read_embeddings_from:str, save_to:str, batch_size:int=1000, return_index:bool=True):
 
-    # Load as a memory-mapped file
-    embeddings = np.load(read_embeddings_from, mmap_mode="r")
-    logger.debug(f"Going to build an index of shape {embeddings.shape}")
+    # Load embeddings
+    with open(read_embeddings_from, "rb") as file:
+        embeddings = np.load(file)
+        logger.debug(f"Going to build an index of shape {embeddings.shape}")
     
-    # Build the index
+    # Build the index (IndexFlatIP, inner product)
     dim = embeddings.shape[1]
-    index = faiss.IndexFlatL2(dim)
+    index = faiss.IndexFlatIP(dim)
 
     # Add embedding vectors to the index one batch at a time
     for batch_num, i in enumerate(range(0, embeddings.shape[0], batch_size), 1):
         batch = embeddings[i : i + batch_size]
+        faiss.normalize_L2(batch) # Important to normalize the vectors
         index.add(batch)
         logger.debug(f"Added batch {batch_num}, index size is now {index.ntotal}")
     logger.info(f"{index.ntotal} vectors in index")
@@ -43,4 +46,5 @@ if __name__ == "__main__":
                         help="Path to the directory where the resulting index should be saved.")
     args = parser.parse_args()
 
+    logger = set_up_logger(3)
     main(args)
