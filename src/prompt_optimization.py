@@ -86,7 +86,7 @@ if __name__ == "__main__":
 
         logger.info(f"Starting the run with {config.model_name}")
 
-        read_index_from = os.path.join(INDEX_DIR, f"{config.model_name.replace("/", "__")}_index.faiss")
+        read_index_from = os.path.join(INDEX_DIR, f"{config.model_name.replace("/", "__")}_indexIP.faiss")
         index = faiss.read_index(read_index_from)
         logger.info(f"Index loaded from {read_index_from} with shape ({index.ntotal}, {index.d})")
 
@@ -124,7 +124,7 @@ if __name__ == "__main__":
 
             _, result_matrix = query(index, embedded_titles, max(top_k_list))
 
-            save_to = os.path.join(PROMPT_EVAL_DIR, f"{config.model_name.replace("/", "__")}_{task_config_name}_results.json")
+            save_to = os.path.join(PROMPT_EVAL_DIR, f"{config.model_name.replace("/", "__")}_{task_config_name}_resultsIP.json")
             save_evaluation(result_matrix, top_k_list, title_indices, save_to)
             logger.info(f"Results for {config.model_name} with prompt {task_config_name} saved to {save_to}")
         

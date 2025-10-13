@@ -24,12 +24,24 @@ class E5Config:
         self.max_tokens_per_batch = 500000
         self.batch_size = -1 # stands for undefined
 
+class BertConfig:
+    def __init__(self):
+        self.model_name = "TurkuNLP/bert-base-finnish-cased-v1"
+        self.max_tokens_per_batch = -1 # stands for undefined
+        self.batch_size = 1024
+
+class XlmConfig:
+    def __init__(self):
+        self.model_name = "sentence-transformers/paraphrase-xlm-r-multilingual-v1"
+        self.max_tokens_per_batch = -1 # stands for undefined
+        self.batch_size = 512
+
 def get_index_path(index_dir, model_name):
-    return os.path.join(index_dir, f"{model_name.replace("/", "__")}_index.faiss")
+    return os.path.join(index_dir, f"{model_name.replace("/", "__")}_indexIP.faiss") # get FlatIP index, not FlatL2
 
 def get_results_paths(results_dir, model_name):
-    distances_path = os.path.join(results_dir, f"{model_name.replace("/", "__")}_distances.npy")
-    indices_path = os.path.join(results_dir, f"{model_name.replace("/", "__")}_indices.npy")
+    distances_path = os.path.join(results_dir, f"{model_name.replace("/", "__")}_distancesIP.npy")
+    indices_path = os.path.join(results_dir, f"{model_name.replace("/", "__")}_indicesIP.npy")
     return distances_path, indices_path
 
 def main():
@@ -45,7 +57,11 @@ def main():
 
     query_indices = list(yield_dev_indices(DATA_PATH))
 
-    configs = (QwenConfig(), E5Config())
+    configs = (
+        QwenConfig(),
+        E5Config(),
+        BertConfig(),
+        XlmConfig())
 
     for config in configs:
 

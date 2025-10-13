@@ -67,7 +67,7 @@ class Config:
             self.save_results_to: str = f'{os.getenv("TEST_DIR")}/{self.replace_slashes_in_model_name()}/results_test.json' # TODO: Modify once the format is decided
 
         else:
-            self.save_embeddings_to: str = f'{os.getenv("EMBEDDING_DIR")}/{self.replace_slashes_in_model_name()}_embeddings.npy'
+            self.save_embeddings_to: str = f'{os.getenv("EMBEDDING_DIR")}/{self.replace_slashes_in_model_name()}_embeddings_normalized.npy'
             self.save_index_to: str = f'{os.getenv("INDEX_DIR")}/{self.replace_slashes_in_model_name()}_indexIP.faiss'
             self.save_results_to: str = f'{os.getenv("EVAL_DIR")}/{self.replace_slashes_in_model_name()}_results.json' # TODO: Modify once the format is decided
 
