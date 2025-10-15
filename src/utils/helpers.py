@@ -84,16 +84,16 @@ def yield_titles_with_instructions(titles: list[str], task_description: str = No
     for title in titles:
         yield get_detailed_instruct(task_description=task_description, query=title, use_fin=use_fin)
 
-def yield_dev_titles(filename, query_key="title"):
+def yield_values_by_split(filename, value_key="title", split="dev"):
     with open(filename) as file:
         for line in file:
             obj = json.loads(line)
-            if obj["split"] == "dev":
-                yield obj[query_key]
+            if obj["split"] == split:
+                yield obj[value_key]
 
-def yield_dev_indices(filename):
+def yield_indices_by_split(filename, split="dev"):
     with open(filename) as file:
         for i, line in enumerate(file):
             obj = json.loads(line)
-            if obj["split"] == "dev":
+            if obj["split"] == split:
                 yield i
