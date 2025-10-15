@@ -218,3 +218,12 @@ outputs/
 
 # Results
 results/
+results_inspection/
+
+# Local tests and inspection
+src/test*.py
+prompt_optimization/
+inspect_*.ipynb
+src/*.csv
+src/*.npy
+src/*.faiss
