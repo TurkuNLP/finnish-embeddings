@@ -19,13 +19,15 @@ def run_pipeline(config:Config):
     query_generator = get_data_in_order(config.news_data_path, config.query_key, query_indices)
     
     if "bm25" in config.model_name:
-        result_matrix = run_bm25s(passages=data_generator,
-                                  corpus_len=num_documents,
-                                  queries=query_generator,
-                                  queries_len=len(query_indices),
-                                  save_index_to=config.save_index_to,
-                                  top_k_list=config.top_k,
-                                  language=config.language)
+        result_matrix, bm25scores = run_bm25s(
+            passages=data_generator,
+            corpus_len=num_documents,
+            queries=query_generator,
+            queries_len=len(query_indices),
+            save_index_to=config.save_index_to,
+            top_k_list=config.top_k,
+            language=config.language
+            )
 
     else:
         batch_embedder = BatchEmbedder(

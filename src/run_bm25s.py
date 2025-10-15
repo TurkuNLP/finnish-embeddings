@@ -37,15 +37,16 @@ def run_bm25s(passages:Iterable[str],
         # Index the corpus
         retriever.index(corpus_tokenized)
 
-        # Save the index
-        retriever.save(save_index_to)
+        if len(save_index_to) > 0:
+            # Save the index
+            retriever.save(save_index_to)
 
         return query_tokenized.ids, retriever
 
     # Tokenize and index the articles
     queries, bm25s_retriever = prepare_scores()
 
-    # Retrieve the top-k results with the non-naive retriever, return value being a matrix of document indices
-    retrieved_documents = bm25s_retriever.retrieve(queries, k=top_k, return_as="documents")
+    # Retrieve the top-k results with the non-naive retriever, return both document indices and scores
+    results = bm25s_retriever.retrieve(queries, k=top_k, return_as="tuple")
 
-    return retrieved_documents
+    return results.documents, results.scores
