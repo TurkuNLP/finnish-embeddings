@@ -24,7 +24,8 @@ class BatchEmbedder:
         self.test = kwargs.get("test", False)
         self.tokenizer, self.model, self.embedding_dim, self.max_length = self.get_model_and_tokenizer()
         self.encoding = get_tiktoken_encoding()
-        self.prompt = self.get_prompt()
+        self.prompt = kwargs.get("prompt", self.get_prompt()) # accept a custom prompt
+        logger.debug(f"Registered task description: {self.prompt}")
 
         # Print model placement and memory statistics
         self.check_devices()
@@ -68,7 +69,7 @@ class BatchEmbedder:
         if "qwen" in self.model_name:
             return "Hae oikea artikkeli, joka kuuluu seuraavalle uutisotsikolle"
         elif "multilingual-e5" in self.model_name:
-            return "Retrieve the relevant article for the given news title"
+            return "Given a web search query, retrieve relevant passages that answer the query"
         else:
             return ""
         
