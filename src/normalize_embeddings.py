@@ -1,7 +1,10 @@
 import faiss
 import numpy as np
 import argparse
-from config.init_logger import set_up_logger
+from config.set_up_logging import set_up_logging
+import logging
+
+logger = logging.getLogger(__name__)
 
 def main(args):
 
@@ -18,7 +21,7 @@ def main(args):
 
 if __name__ == "__main__":
     
-    logger = set_up_logger(3)
+    set_up_logging(3)
 
     parser = argparse.ArgumentParser()
     parser.add_argument("embeddings_filename")

@@ -1,5 +1,5 @@
-from config.init_logger import set_up_logger
 import logging
+from config.set_up_logging import set_up_logging
 import argparse
 import faiss
 import numpy as np
@@ -46,5 +46,5 @@ if __name__ == "__main__":
                         help="Path to the directory where the resulting index should be saved.")
     args = parser.parse_args()
 
-    logger = set_up_logger(3)
+    set_up_logging(3)
     main(args)

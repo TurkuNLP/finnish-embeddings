@@ -1,5 +1,6 @@
 import os
 import logging
+from config.set_up_logging import set_up_logging
 from dotenv import load_dotenv
 from utils.helpers import yield_values_from_jsonl, get_line_count, yield_indices_by_split, yield_values_by_split
 from embed import BatchEmbedder
@@ -8,22 +9,23 @@ from query import query
 from run_bm25s import run_bm25s
 import numpy as np
 
-def set_up_logger(verbosity_level:int):
-    verbosity_levels = {0: logging.CRITICAL, 1: logging.WARNING, 2: logging.INFO, 3: logging.DEBUG}
-    logging.basicConfig(level=verbosity_levels[verbosity_level], force=True)
-    return logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 class QwenConfig:
     def __init__(self):
         self.model_name = "Qwen/Qwen3-Embedding-8B"
         self.max_tokens_per_batch = 65000
         self.batch_size = -1 # stands for undefined
+        self.task_name = "custom-eng-4"
+        self.task_desc = "Retrieve the relevant article for the given news title"
 
 class E5Config:
     def __init__(self):
         self.model_name = "intfloat/multilingual-e5-large-instruct"
         self.max_tokens_per_batch = 500000
         self.batch_size = -1 # stands for undefined
+        self.task_name = "custom-fin-1"
+        self.task_desc = "Hae uutisotsikkoa vastaava artikkeli"
 
 class BertConfig:
     def __init__(self):
@@ -44,14 +46,14 @@ class BM25Config:
 def get_index_path(index_dir, model_name):
     return os.path.join(index_dir, f"{model_name.replace("/", "__")}_indexIP.faiss") # get FlatIP index, not FlatL2
 
-def get_results_paths(results_dir, model_name):
-    distances_path = os.path.join(results_dir, f"{model_name.replace("/", "__")}_distancesIP.npy")
-    indices_path = os.path.join(results_dir, f"{model_name.replace("/", "__")}_indicesIP.npy")
-    return distances_path, indices_path
+def get_results_paths(results_dir, model_name, task=""):
+    if len(task) > 0:
+        task = f"_{task}" # add underscore to the left side if task is given
+    similarities_path = os.path.join(results_dir, f"{model_name.replace("/", "__")}{task}_similaritiesIP.npy")
+    indices_path = os.path.join(results_dir, f"{model_name.replace("/", "__")}{task}_indicesIP.npy")
+    return similarities_path, indices_path
 
 def main():
-
-    logger = set_up_logger(3) # debug level
 
     load_dotenv()
     DATA_PATH = os.getenv("NEWS_DATA_DEVTEST")
@@ -65,17 +67,21 @@ def main():
     configs = (
         QwenConfig(),
         E5Config(),
-        BertConfig(),
-        XlmConfig(),
-        BM25Config(),
+        #BertConfig(),
+        #XlmConfig(),
+        #BM25Config(),
         )
 
     for config in configs:
 
         logger.info(f"Starting the run with {config.model_name}")
 
+        # Collect the task metadata if given
+        task_name = getattr(config, "task_name", "")
+        task_desc = getattr(config, "task_desc", "")
+
         if config.model_name == "bm25s":
-            result_indices, distances = run_bm25s(
+            result_indices, similarities = run_bm25s(
                 passages=yield_values_from_jsonl(DATA_PATH, key="text_end"),
                 corpus_len=get_line_count(DATA_PATH),
                 queries=yield_values_by_split(DATA_PATH, value_key="title", split="dev"),
@@ -93,25 +99,28 @@ def main():
             batch_embedder = BatchEmbedder(
                 model_name=config.model_name,
                 batch_size=config.batch_size,
-                max_tokens_per_batch=config.max_tokens_per_batch)
+                max_tokens_per_batch=config.max_tokens_per_batch,
+                prompt=task_desc
+                )
             
             encoded_queries = batch_embedder.encode_queries(
                 documents=yield_values_by_split(DATA_PATH),
                 num_documents=len(query_indices),
                 return_embeddings=True)
             
-            distances, result_indices = query(index, encoded_queries, k_nearest)
+            similarities, result_indices = query(index, encoded_queries, k_nearest)
 
             del batch_embedder # clear memory before using another model
 
-        distances_path, indices_path = get_results_paths(RESULTS_DIR, config.model_name) 
-        with open(distances_path, "bw") as d, open(indices_path, "bw") as i:
-            np.save(d, distances)
+        similarities_path, indices_path = get_results_paths(RESULTS_DIR, config.model_name, task=task_name) 
+        with open(similarities_path, "bw") as d, open(indices_path, "bw") as i:
+            np.save(d, similarities)
             np.save(i, result_indices)
-        logger.info(f"Distance matrix saved to {distances_path}")
+        logger.info(f"Similarity matrix saved to {similarities_path}")
         logger.info(f"Result indices matrix saved to {indices_path}")
 
 
 if __name__ == "__main__":
+    set_up_logging(3) # debug level
     main()
     

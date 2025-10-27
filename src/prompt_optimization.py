@@ -2,41 +2,18 @@ from dotenv import load_dotenv
 import os
 import json
 from embed import BatchEmbedder
+from utils.helpers import yield_values_by_split, yield_indices_by_split, yield_titles_with_instructions, get_detailed_instruct
+from config.set_up_logging import set_up_logging
 import faiss
 from query import query
 from evaluate import save_evaluation
 import logging
 import random
 
-def set_up_logger(verbosity_level:int):
-    verbosity_levels = {0: logging.CRITICAL, 1: logging.WARNING, 2: logging.INFO, 3: logging.DEBUG}
-    logging.basicConfig(level=verbosity_levels[verbosity_level], force=True)
-    return logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
-def get_detailed_instruct(*, task_description: str, query: str, use_fin: bool = False) -> str:
-    if task_description == None:
-        return query
-    if use_fin:
-        return f"Ohje: {task_description}\nUutisotsikko: {query}"
-    return f"Instruct: {task_description}\nQuery: {query}"
-
-def yield_titles_with_instructions(titles: list[str], task_description: str = None, use_fin: bool = False):
-    for title in titles:
-        yield get_detailed_instruct(task_description=task_description, query=title, use_fin=use_fin)
-
-def yield_dev_titles(filename, query_key="title"):
-    with open(filename) as file:
-        for line in file:
-            obj = json.loads(line)
-            if obj["split"] == "dev":
-                yield obj[query_key]
-
-def yield_dev_indices(filename):
-    with open(filename) as file:
-        for i, line in enumerate(file):
-            obj = json.loads(line)
-            if obj["split"] == "dev":
-                yield i
+def get_task_configs():
+    pass
 
 class QwenConfig:
     def __init__(self):
@@ -57,7 +34,7 @@ class E5Config:
 
 if __name__ == "__main__":
 
-    logger = set_up_logger(3) # debug level
+    set_up_logging(3) # debug level
 
     load_dotenv()
 
@@ -77,8 +54,8 @@ if __name__ == "__main__":
         "fin_3": "Löydä seuraavalle uutisotsikolle kuuluva artikkeli"
     }
 
-    titles = list(yield_dev_titles(DATA_PATH))
-    title_indices = list(yield_dev_indices(DATA_PATH))
+    titles = list(yield_values_by_split(DATA_PATH, value_key="title", split="dev"))
+    title_indices = list(yield_indices_by_split(DATA_PATH, split="dev"))
     model_configs = (E5Config(), QwenConfig())
     top_k_list = [1, 5]
 
@@ -122,7 +99,7 @@ if __name__ == "__main__":
                 )
             logger.info(f"Shape of the embedded titles: {embedded_titles.shape}")
 
-            _, result_matrix = query(index, embedded_titles, max(top_k_list))
+            similarities, result_matrix = query(index, embedded_titles, max(top_k_list))
 
             save_to = os.path.join(PROMPT_EVAL_DIR, f"{config.model_name.replace("/", "__")}_{task_config_name}_resultsIP.json")
             save_evaluation(result_matrix, top_k_list, title_indices, save_to)

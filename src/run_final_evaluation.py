@@ -1,4 +1,4 @@
-import os
+from config.set_up_logging import set_up_logging
 from config.init_argument_parser import init_argument_parser
 from config.Config import Config
 import logging
@@ -9,10 +9,9 @@ from .index import load_index
 from .query import query
 from .evaluate import save_evaluation, show_textual_evaluation
 
+logger = logging.getLogger(__name__)
 
-def run_final_evaluation(config:Config):
-
-    logger = logging.getLogger(__name__)
+def run_final_evaluation(config:Config): 
 
     query_indices = get_query_indices(config.read_query_indices_from)
     query_generator = yield_values_from_jsonl(config.news_data_path, config.query_key, indices=query_indices) # final query indices are expected to be in order
@@ -25,13 +24,15 @@ def run_final_evaluation(config:Config):
         num_documents = get_line_count(config.news_data_path)
         data_generator = yield_values_from_jsonl(config.news_data_path, config.passage_key)
         
-        result_matrix = run_bm25s(passages=data_generator,
-                                  corpus_len=num_documents,
-                                  queries=query_generator,
-                                  queries_len=len(query_indices),
-                                  save_index_to=config.save_index_to,
-                                  top_k_list=config.top_k,
-                                  language=config.language)
+        result_matrix, _ = run_bm25s(
+            passages=data_generator,
+            corpus_len=num_documents,
+            queries=query_generator,
+            queries_len=len(query_indices),
+            save_index_to=config.save_index_to,
+            top_k_list=config.top_k,
+            language=config.language
+            )
 
     else:
         batch_embedder = BatchEmbedder(
@@ -66,6 +67,7 @@ def run_final_evaluation(config:Config):
 
 
 if __name__ == "__main__":
+    set_up_logging(3)
     parser = init_argument_parser()
     args = parser.parse_args()
     config = Config.parse_config()

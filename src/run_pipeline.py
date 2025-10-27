@@ -1,3 +1,4 @@
+from config.set_up_logging import set_up_logging
 from config.init_argument_parser import init_argument_parser
 from config.Config import Config
 import logging
@@ -8,6 +9,7 @@ from .index import save_index
 from .query import query
 from .evaluate import save_evaluation, show_textual_evaluation
 
+logger = logging.getLogger(__name__)
 
 def run_pipeline(config:Config):
 
@@ -19,7 +21,7 @@ def run_pipeline(config:Config):
     query_generator = get_data_in_order(config.news_data_path, config.query_key, query_indices)
     
     if "bm25" in config.model_name:
-        result_matrix, bm25scores = run_bm25s(
+        result_matrix, _ = run_bm25s(
             passages=data_generator,
             corpus_len=num_documents,
             queries=query_generator,
@@ -72,9 +74,9 @@ def run_pipeline(config:Config):
 
 
 if __name__ == "__main__":
+    set_up_logging(3)
     parser = init_argument_parser()
     args = parser.parse_args()
     config = Config.parse_config()
-    logger = logging.getLogger(__name__)
 
     run_pipeline(config)
