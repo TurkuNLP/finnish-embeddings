@@ -14,7 +14,7 @@ def test_model_name_renaming(monkeypatch):
     config = Config(model_name)
 
     assert config.model_name == model_name
-    assert config.save_embeddings_to == "path/to/dir/some__awesome__model_embeddings.npy"
+    assert config.save_embeddings_to == "path/to/dir/some__awesome__model_embeddings_normalized.npy"
 
 def test_parse_config():
 
@@ -63,4 +63,4 @@ def test_config_with_test(monkeypatch):
     config = Config.parse_config(args)
 
     assert config.model_name == model_name
-    assert config.save_embeddings_to == "path/to/test/dir/some__awesome__model_embeddings_test.npy"
+    assert config.save_embeddings_to == "path/to/test/dir/some__awesome__model/embeddings_test.npy"
