@@ -4,13 +4,14 @@ from src.utils.helpers import save_to_json, get_data_as_dict
 
 logger = logging.getLogger(__name__)
 
-def map_query_indices(query_indices:list):
+def map_query_indices(query_indices:list[int]):
+    """Enumerate the query indices list so that the indices correspond to
+    the indices of the result matrix."""
     return {i: query_index for i, query_index in enumerate(query_indices)}
 
 def count_recall(hits:int, total:int):
     return (hits / total) * 100
         
-# Note! Half-hard-coded to count recall at 1 and 5
 def evaluate(result_matrix, top_k_list:list[int], query_indices:list):
 
     logger.debug(f"Result matrix preview:\n{result_matrix[:10]}")
@@ -24,14 +25,9 @@ def evaluate(result_matrix, top_k_list:list[int], query_indices:list):
     recall_evaluation_counts = {k: 0 for k in top_k_list}
 
     for i in range(len(index_map)):
-
-        # Chek recall @ 1
-        if result_matrix[i][0] == index_map[i]:
-            recall_evaluation_counts[1] += 1 # hard-coded!
-        
-        # Check recall @ 5
-        if index_map[i] in result_matrix[i][:5]:
-            recall_evaluation_counts[5] += 1 # hard-coded!
+        for top_k in top_k_list:
+            if index_map[i] in result_matrix[i][:top_k]:
+                recall_evaluation_counts[top_k] += 1
     
     return {f"recall_at_{k}": count_recall(v, len(index_map)) for k, v in recall_evaluation_counts.items()}
 
@@ -69,3 +65,4 @@ def save_evaluation(result_matrix, top_k_list:list[int], query_indices:list, sav
     evaluation = evaluate(result_matrix, top_k_list, query_indices)
     logger.info(f"Results for evaluation: {evaluation}")
     save_to_json(save_to, evaluation)
+    return evaluation
