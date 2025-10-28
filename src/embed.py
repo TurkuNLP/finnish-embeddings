@@ -25,7 +25,7 @@ class BatchEmbedder:
         self.tokenizer, self.model, self.embedding_dim, self.max_length = self.get_model_and_tokenizer()
         self.encoding = get_tiktoken_encoding()
         self.prompt = kwargs.get("prompt", self.get_prompt()) # accept a custom prompt
-        logger.debug(f"Registered task description: {self.prompt}")
+        logger.info(f"Registered task description at initialization time: {self.prompt}")
 
         # Print model placement and memory statistics
         self.check_devices()
@@ -98,7 +98,7 @@ class BatchEmbedder:
                     num_processed += len(current_batch)
                     estimated_batches_remaining = int((num_documents - num_processed) / len(current_batch))
                     logger.info(f"{num_processed}/{num_documents} documents iterated")
-                    logger.info(f"Latest batch of size {len(current_batch)} documents and {len(current_batch) * current_max_len} estimated tokens. Estimated number of batches remaining: {estimated_batches_remaining}")
+                    logger.debug(f"Latest batch of size {len(current_batch)} documents and {len(current_batch) * current_max_len} estimated tokens. Estimated number of batches remaining: {estimated_batches_remaining}")
 
                     yield current_batch
 
@@ -119,8 +119,13 @@ class BatchEmbedder:
             logger.info(f"Going to use static batch size of {self.batch_size}")
             return do_batching(documents, self.batch_size)
 
-    def encode_queries(self, documents, num_documents, save_to=None, return_embeddings=False):
-        documents_with_instruction = yield_titles_with_instructions(documents, task_description=self.prompt)
+    def encode_queries(self, documents, num_documents, save_to=None, return_embeddings=False, task_description=None):
+        """Encode queries by optionally augmenting with a task description.
+        If task_description is not specified, will use self.prompt."""
+        task_description = task_description if task_description is not None else self.prompt
+        if task_description != self.prompt:
+            logger.info(f"Overriding defult model prompt ('{self.prompt}') with user-passed prompt '{task_description}'")
+        documents_with_instruction = yield_titles_with_instructions(documents, task_description=task_description)
         return self.encode(documents_with_instruction, num_documents, save_to, return_embeddings)
 
     def encode(self, documents, num_documents, save_to=None, return_embeddings=False):
@@ -199,7 +204,7 @@ class BatchEmbedder:
         logger.info(f'  TOTAL: {total/2**30:.1f}G')
 
     def check_devices(self):
-        print(f'devices:')
+        logger.debug(f'devices:')
         for name, module in self.model.named_modules():
             for param_name, param in module.named_parameters(recurse=False):
                 logger.debug(f'  {name}.{param_name}:{param.device}')
