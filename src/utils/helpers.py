@@ -1,3 +1,4 @@
+import os
 import json
 from itertools import islice
 from typing import Iterable
@@ -73,6 +74,11 @@ def save_to_json(filename, obj:dict):
     with open(filename, "w") as file:
         json.dump(obj, file)
 
+def save_to_jsonl(filename, obj, open_mode="a"):
+    with open(filename, open_mode) as file:
+        json.dump(obj, file)
+        file.write("\n")
+
 def get_detailed_instruct(*, task_description: str, query: str, use_fin: bool = False) -> str:
     if task_description == "":
         return query
@@ -97,3 +103,10 @@ def yield_indices_by_split(filename, split="dev"):
             obj = json.loads(line)
             if obj["split"] == split:
                 yield i
+
+def get_results_paths(results_dir, model_name, task=""):
+    if len(task) > 0:
+        task = f"_{task}" # add underscore to the left side if task is given
+    similarities_path = os.path.join(results_dir, f"{model_name.replace("/", "__")}{task}_similaritiesIP.npy")
+    indices_path = os.path.join(results_dir, f"{model_name.replace("/", "__")}{task}_indicesIP.npy")
+    return similarities_path, indices_path
