@@ -10,7 +10,7 @@ def map_query_indices(query_indices:list[int]):
     return {i: query_index for i, query_index in enumerate(query_indices)}
 
 def count_recall(hits:int, total:int):
-    return (hits / total) * 100
+    return round((hits / total) * 100, 3)
         
 def evaluate(result_matrix, top_k_list:list[int], query_indices:list):
 
