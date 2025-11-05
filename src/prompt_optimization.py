@@ -1,13 +1,13 @@
 from dotenv import load_dotenv
 import os
 from config.ModelConfig import QwenConfig, E5Config
-from config.task_prompts import TASK_PROMPTS, CUSTOM_PROMPTS
+from config.task_prompts import CUSTOM_PROMPTS, MTEB_PROMPTS_FLAT
 from embed import BatchEmbedder
-from utils.helpers import yield_values_by_split, yield_indices_by_split, yield_titles_with_instructions, get_detailed_instruct, get_results_paths, save_to_jsonl
+from utils.helpers import yield_values_by_split, yield_indices_by_split, get_detailed_instruct, get_results_paths, save_to_jsonl
 from config.set_up_logging import set_up_logging
 import faiss
 from query import query
-from evaluate import save_evaluation
+from evaluate import evaluate
 import logging
 import random
 import numpy as np
@@ -22,7 +22,6 @@ def main():
     INDEX_DIR = os.getenv("INDEX_DIR")
     PROMPT_EVAL_DIR = os.getenv("PROMPT_EVAL_DIR")
     RESULTS_DIR = os.getenv("DEV_TOP_100_ALL_PROMPTS_DIR")
-    ALL_PROMPT_RESULTS_JSONL = os.getenv("ALL_PROMPT_RESULTS_JSONL")
 
     titles = list(yield_values_by_split(DATA_PATH, value_key="title", split="dev"))
     title_indices = list(yield_indices_by_split(DATA_PATH, split="dev"))
@@ -33,45 +32,52 @@ def main():
 
         logger.info(f"Starting the run with {config.model_name}")
 
+        save_all_evals_to = os.path.join(PROMPT_EVAL_DIR, f"all_results_mteb_{config.short_name}.jsonl")
+
         read_index_from = os.path.join(INDEX_DIR, f"{config.model_name.replace("/", "__")}_indexIP.faiss") # make sure to use IndexFlatIP
         index = faiss.read_index(read_index_from)
         logger.info(f"Index loaded from {read_index_from} with shape ({index.ntotal}, {index.d})")
 
         batch_embedder = BatchEmbedder(config.model_name, config.batch_size, config.max_tokens_per_batch)
 
-        task_configs = TASK_PROMPTS | CUSTOM_PROMPTS # combine prompt dictionaries
+        task_configs = MTEB_PROMPTS_FLAT | CUSTOM_PROMPTS # combine prompt dictionaries
         logger.info(f"Going to run evaluation for {len(task_configs)} unique task descriptions.")
         
         for task_name, task_description in task_configs.items():
+
+            similarities_path, indices_path = get_results_paths(RESULTS_DIR, config.model_name, task=task_name)
+            """
+            if os.path.exists(similarities_path) and os.path.exists(indices_path):
+                logger.info(f"Results for {task_name} already exist. Continuing to next task.")
+                continue
+            """
 
             logger.info(f"Embedding the titles with configuration {task_name}")
             logger.info(f"Example query with the specified instructions:")
             logger.info(f"\n{get_detailed_instruct(task_description=task_description, query=titles[random.randint(0,4999)])}")
 
             embedded_titles = batch_embedder.encode_queries(
-                documents = yield_titles_with_instructions(titles, task_description=task_description),
+                documents = titles,
                 num_documents = len(titles),
                 return_embeddings = True,
-                prompt=task_description
+                task_description=task_description
                 )
             logger.info(f"Shape of the embedded titles: {embedded_titles.shape}")
 
             similarities, result_matrix = query(index, embedded_titles, max(top_k_list))
 
             # Save the similarity and retrieved article index matrices
-            similarities_path, indices_path = get_results_paths(RESULTS_DIR, config.model_name, task=task_name) 
             with open(similarities_path, "bw") as d, open(indices_path, "bw") as i:
                 np.save(d, similarities)
                 np.save(i, result_matrix)
             logger.info(f"Similarity matrix saved to {similarities_path}")
             logger.info(f"Result indices matrix saved to {indices_path}")
 
-            save_to = os.path.join(PROMPT_EVAL_DIR, f"{config.model_name.replace("/", "__")}_{task_name}_resultsIP.json")
-            # Save the evaluation in a separate file
-            evaluation = save_evaluation(result_matrix, top_k_list, title_indices, save_to)
+            evaluation = evaluate(result_matrix, top_k_list, title_indices)
+            logger.info(f"Results for evaluation for {task_name} ('{task_description}'): {evaluation}")
             # Save the evaluation by appending to a JSONL file with other results
-            save_to_jsonl(ALL_PROMPT_RESULTS_JSONL, {task_description: evaluation})
-            logger.info(f"Results for {config.model_name} with prompt {task_name} saved to {save_to} and {ALL_PROMPT_RESULTS_JSONL}")
+            save_to_jsonl(save_all_evals_to, {task_description: evaluation})
+            logger.info(f"Results for {config.model_name} with prompt {task_name} saved to {save_all_evals_to}")
         
         del batch_embedder # clear memory before using another model
 
