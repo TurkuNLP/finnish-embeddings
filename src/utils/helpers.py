@@ -76,7 +76,7 @@ def save_to_json(filename, obj:dict):
 
 def save_to_jsonl(filename, obj, open_mode="a"):
     with open(filename, open_mode) as file:
-        json.dump(obj, file)
+        json.dump(obj, file, ensure_ascii=False)
         file.write("\n")
 
 def get_detailed_instruct(*, task_description: str, query: str, use_fin: bool = False) -> str:
