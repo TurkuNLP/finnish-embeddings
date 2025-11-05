@@ -3,11 +3,18 @@ TASK_PROMPTS
     These are a combination from
     https://github.com/QwenLM/Qwen3-Embedding/blob/main/evaluation/task_prompts.json and
     https://github.com/microsoft/unilm/blob/9c0f1ff7ca53431fe47d2637dfe253643d94185b/e5/utils.py#L106
-    where only the unique task descriptions are kept,
-    and the task name is the first encountered task name with that description.
+    where only the unique task descriptions are kept, and the task name is the first encountered task name with that description.
 
 CUSTOM_PROMPTS
     These are customized for the given task.
+
+MTEB_PROMPTS
+    https://github.com/embeddings-benchmark/mteb/tree/main
+    These contain unique task descriptions from MTEB, grouped by the task type. Name of the task is the first encountered task with a given description,
+    but other tasks with the same description may exist.
+
+MTEB_PROMPTS_FLAT
+    Same MTEB prompts but with flat dictionary structure (= no grouping by task type).
 """
 
 TASK_PROMPTS = {
@@ -161,3 +168,112 @@ CUSTOM_PROMPTS = {
     "CustomFin2": "Hae oikea artikkeli, joka kuuluu seuraavalle uutisotsikolle",
     "CustomFin3": "Löydä seuraavalle uutisotsikolle kuuluva artikkeli"
     }
+
+MTEB_PROMPTS = {
+    "BitextMining": {
+        "NorwegianCourtsBitextMining": "Retrieve parallel sentences in Norwegian Bokmål and Nynorsk",
+        "BornholmBitextMining": "Retrieve parallel sentences."
+    },
+    "Classification": {
+        "HUMEEmotionClassification": "Classify the emotion expressed in the given Twitter message into one of the six emotions: anger, fear, joy, love, sadness, and surprise",
+        "HUMEToxicConversationsClassification": "Classify the given comments as either toxic or not toxic",
+        "InappropriatenessClassificationv2": "Classify the given message as either sensitive topic or not",
+        "HUMETweetSentimentExtractionClassification": "Classify the sentiment of a given tweet as either positive, negative, or neutral",
+        "FaIntentClassification": "Classify user passages."
+    },
+    "Clustering": {
+        "HUMEWikiCitiesClustering": "Identify categories in user passages.",
+        "HUMEArxivClusteringP2P": "Identify the main and secondary category of Arxiv papers based on the titles and abstracts",
+        "HUMESIB200ClusteringS2S": "Identify the news category that articles belong to based on their content",
+        "HUMERedditClusteringP2P": "Identify the topic or theme of Reddit posts based on the titles and posts",
+        "KlueYnatMrcCategoryClustering": "Identify the topic or theme of the given texts"
+    },
+    "InstructionReranking": {
+        "Core17InstructionRetrieval": "Retrieve text based on user query."
+    },
+    "PairClassification": {
+        "TERRa": "Given a premise, retrieve a hypothesis that is entailed by the premise",
+        "SprintDuplicateQuestions": "Retrieve duplicate questions from Sprint forum",
+        "Cmnli": "Retrieve semantically similar text.",
+        "ArEntail": "Retrieve text that are semantically similar to the given text.",
+        "TwitterSemEval2015": "Retrieve tweets that are semantically similar to the given tweet"
+    },
+    "Reranking": {
+        "CMedQAv1-reranking": "Given a Chinese community medical question, retrieve replies that best answer the question",
+        "MMarcoReranking": "Given a Chinese search query, retrieve web passages that answer the question",
+        "JQaRAReranking": "Given a Japanese question, rerank passages based on their relevance for answering the question",
+        "VoyageMMarcoReranking": "Given a Japanese search query, retrieve web passages that answer the question",
+        "LocBenchRR": "Given a github issue, identify the code that needs to be changed to fix the issue.",
+        "HUMEWikipediaRerankingMultilingual": "Given a query, rerank the Wikipedia passages by their relevance to the query",
+        "HUMECore17InstructionReranking": "Given a query, rerank the documents by their relevance to the query",
+        "BuiltBenchReranking": "Given a query, retrieve relevant entity descriptions from buit asset classification systems such as IFC and Uniclass",
+        "MIRACLReranking": "Given a question, retrieve Wikipedia passages that answer the question",
+        "RuBQReranking": "Given a question, retrieve Wikipedia passages that answer the question.",
+        "SciDocsRR": "Given a title of a scientific paper, retrieve the titles of other relevant papers",
+        "AskUbuntuDupQuestions": "Retrieve duplicate questions from AskUbuntu forum",
+        "StackOverflowDupQuestions": "Retrieve duplicate questions from StackOverflow forum",
+        "MindSmallReranking": "Retrieve relevant news articles based on user browsing history"
+    },
+    "Retrieval": {
+        "SwednRetrieval": "Given a Swedish news headline retrieve summaries or news articles",
+        "ClimateFEVER": "Given a claim about climate change, retrieve documents that support or refute the claim",
+        "DanFeverRetrieval": "Given a claim in Danish, retrieve documents that support the claim",
+        "ArguAna": "Given a claim, find documents that refute the claim",
+        "FEVER": "Given a claim, retrieve documents that support or refute the claim",
+        "FinQARetrieval": "Given a financial numerical reasoning question, retrieve relevant financial data that helps answer the question",
+        "HC3FinanceRetrieval": "Given a financial question or prompt, retrieve relevant financial content that best addresses the query",
+        "FinanceBenchRetrieval": "Given a financial question, retrieve relevant financial information that best answers the question",
+        "FiQA2018": "Given a financial question, retrieve user replies that best answer the question",
+        "SNLRetrieval": "Given a lexicon headline in Norwegian, retrieve its article",
+        "BIRCO-Relic": "Given a literary analysis with a missing quotation (marked as [masked sentence(s)]), retrieve the passage that best completes the analysis.",
+        "ChatDoctorRetrieval": "Given a medical question from a patient, retrieve relevant healthcare information that best answers the question",
+        "MedicalRetrieval": "Given a medical question, retrieve user replies that best answer the question",
+        "HotpotQA": "Given a multi-hop question, retrieve documents that can help answer the question",
+        "RiaNewsRetrieval": "Given a news title, retrieve relevant news article",
+        "BIRCO-ArguAna": "Given a one-paragraph argument, retrieve the passage that contains the counter-argument which directly refutes the query's stance.",
+        "BIRCO-ClinicalTrial": "Given a patient case report, retrieve the clinical trial description that best matches the patient's eligibility criteria.",
+        "TRECCOVID": "Given a query on COVID-19, retrieve documents that answer the query",
+        "DBPedia": "Given a query, retrieve relevant entity descriptions from DBPedia",
+        "CUREv1": "Given a question by a medical professional, retrieve relevant passages that best answer the question",
+        "NorQuadRetrieval": "Given a question in Norwegian, retrieve the answer from Wikipedia articles",
+        "CovidRetrieval": "Given a question on COVID-19, retrieve news articles that answer the question",
+        "NanoTouche2020Retrieval": "Given a question, retrieve detailed and persuasive arguments that answer the question",
+        "NanoQuoraRetrieval": "Given a question, retrieve questions that are semantically equivalent to the given question",
+        "NFCorpus": "Given a question, retrieve relevant documents that best answer the question",
+        "NanoSciFactRetrieval": "Given a scientific claim, retrieve documents that support or refute the claim",
+        "SCIDOCS": "Given a scientific paper title, retrieve paper abstracts that are cited by the given paper",
+        "TV2Nordretrieval": "Given a summary of a Danish news article retrieve the corresponding news article",
+        "RuSciBenchCiteRetrieval": "Given a title and abstract of a scientific paper, retrieve the titles and abstracts of other relevant papers",
+        "EcomRetrieval": "Given a user query from an e-commerce website, retrieve description sentences of relevant products",
+        "VideoRetrieval": "Given a video search query, retrieve the titles of relevant videos",
+        "MSMARCO": "Given a web search query, retrieve relevant passages that answer the query",
+        "BIRCO-WTB": "Given an ambiguous description of a book, retrieve the book description that best matches the query.",
+        "SIQA": "Given the following context and question, retrieve the correct answer.",
+        "PIQA": "Given the following goal, retrieve a possible solution.",
+        "TempReasonL1": "Given the following question about time, retrieve the correct answer.",
+        "TempReasonL2Fact": "Given the following question and facts, retrieve the correct answer.",
+        "TempReasonL2Context": "Given the following question, facts and contexts, retrieve the correct answer.",
+        "TempReasonL2Pure": "Given the following question, retrieve the correct answer.",
+        "WinoGrande": "Given the following sentence, retrieve an appropriate answer to fill in the missing underscored part.",
+        "SpartQA": "Given the following spatial reasoning question, retrieve the right answer.",
+        "AlphaNLI": "Given the following start and end of a story, retrieve a possible reason that leads to the end.",
+        "HellaSwag": "Given the following unfinished context, retrieve the most plausible ending to finish it.",
+        "BIRCO-DorisMae": "Identify scientific abstracts that fulfill research requirements",
+        "SweFaqRetrieval": "Retrieve answers given questions in Swedish",
+        "TwitterHjerneRetrieval": "Retrieve answers to questions asked in Danish tweets",
+        "RARbCode": "Retrieve the answer for the following coding problem.",
+        "RARbMath": "Retrieve the answer for the following math problem.",
+        "ARCChallenge": "Retrieve the answer to the question."
+    },
+    "Any2AnyRetrieval": {
+        "WebQAT2TRetrieval": "Retrieve passages from Wikipedia that provide answers to the following question."
+    },
+    "Summarization": {
+        "SummEvalSummarization.v2": "Given a news summary, retrieve other semantically similar summaries."
+    }
+}
+
+def flatten_mteb_prompts():
+    return {k: v for inner in MTEB_PROMPTS.values() for k, v in inner.items()}
+
+MTEB_PROMPTS_FLAT = flatten_mteb_prompts()
