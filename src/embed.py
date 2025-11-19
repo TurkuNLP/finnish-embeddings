@@ -69,7 +69,7 @@ class BatchEmbedder:
         if "qwen" in self.model_name:
             return "Hae oikea artikkeli, joka kuuluu seuraavalle uutisotsikolle"
         elif "multilingual-e5" in self.model_name:
-            return "Given a web search query, retrieve relevant passages that answer the query"
+            return "Retrieve text based on user query."
         else:
             return ""
         

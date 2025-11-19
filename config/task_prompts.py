@@ -15,6 +15,9 @@ MTEB_PROMPTS
 
 MTEB_PROMPTS_FLAT
     Same MTEB prompts but with flat dictionary structure (= no grouping by task type).
+
+BEST_PROMPTS
+    Prompts that give best results with Qwen and E5 on the dev set of 5000 queries.
 """
 
 TASK_PROMPTS = {
@@ -277,3 +280,8 @@ def flatten_mteb_prompts():
     return {k: v for inner in MTEB_PROMPTS.values() for k, v in inner.items()}
 
 MTEB_PROMPTS_FLAT = flatten_mteb_prompts()
+
+BEST_PROMPTS = {
+    "BestQwen": "Hae oikea artikkeli, joka kuuluu seuraavalle uutisotsikolle",
+    "BestE5": "Retrieve text based on user query."
+}
