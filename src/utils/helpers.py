@@ -11,7 +11,7 @@ def yield_values_from_jsonl(filename, key:str=None, first_k:int=None, indices:li
             if first_k and i == first_k:
                 return
             if indices and i not in indices:
-                    continue
+                continue
             if key:
                 yield json.loads(line)[key]
             else:
