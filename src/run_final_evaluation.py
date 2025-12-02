@@ -3,11 +3,11 @@ from config.init_argument_parser import init_argument_parser
 from config.Config import Config
 import logging
 from utils.helpers import yield_values_from_jsonl, get_line_count, get_query_indices, get_data_in_order
-from .run_bm25s import run_bm25s
-from .embed import BatchEmbedder
-from .index import load_index
-from .query import query
-from .evaluate import save_evaluation, show_textual_evaluation
+from src.run_bm25s import run_bm25s
+from src.embed import BatchEmbedder
+from src.index import load_index
+from src.query import query
+from src.evaluate import save_matrices, save_evaluation, show_textual_evaluation
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,14 @@ def run_final_evaluation(config:Config):
             )
 
         max_top_k = max(config.top_k)
-        _, result_matrix = query(index, query_embeddings, max_top_k)
+        similarities, result_matrix = query(index, query_embeddings, max_top_k)
+    
+    save_matrices(
+        results_dir=config.save_matrices_to,
+        model_name=config.model_name,
+        similarities_matrix = similarities,
+        result_matrix=result_matrix
+        )
     
     save_evaluation(
         result_matrix=result_matrix,
@@ -60,7 +67,7 @@ def run_final_evaluation(config:Config):
     
     # Show the queries and retrieved articles for the k first queries
     eval_queries = list(get_data_in_order(config.news_data_path, config.query_key, query_indices[:config.first_k]))
-    subset_for_textual_evaluation = result_matrix[:config.first_k]
+    subset_for_textual_evaluation = result_matrix[:config.first_k, :config.first_k]
     show_textual_evaluation(config.news_data_path,
                             eval_queries,
                             subset_for_textual_evaluation)
