@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import os
 from config.ModelConfig import QwenConfig, E5Config
-from config.task_prompts import CUSTOM_PROMPTS, MTEB_PROMPTS_FLAT
+from config.task_prompts import CUSTOM_PROMPTS, MTEB_PROMPTS_FLAT, BEST_PROMPTS
 from embed import BatchEmbedder
 from utils.helpers import yield_values_by_split, yield_indices_by_split, get_detailed_instruct, get_results_paths, save_to_jsonl
 from config.set_up_logging import set_up_logging
@@ -26,13 +26,13 @@ def main():
     titles = list(yield_values_by_split(DATA_PATH, value_key="title", split="dev"))
     title_indices = list(yield_indices_by_split(DATA_PATH, split="dev"))
     model_configs = (E5Config(), QwenConfig())
-    top_k_list = [1, 5]
+    top_k_list = [1, 5, 10, 25, 50, 100]
 
     for config in model_configs:
 
         logger.info(f"Starting the run with {config.model_name}")
 
-        save_all_evals_to = os.path.join(PROMPT_EVAL_DIR, f"all_results_mteb_{config.short_name}.jsonl")
+        save_all_evals_to = os.path.join(PROMPT_EVAL_DIR, f"all_results_best_{config.short_name}.jsonl") # change filename
 
         read_index_from = os.path.join(INDEX_DIR, f"{config.model_name.replace("/", "__")}_indexIP.faiss") # make sure to use IndexFlatIP
         index = faiss.read_index(read_index_from)
@@ -40,10 +40,14 @@ def main():
 
         batch_embedder = BatchEmbedder(config.model_name, config.batch_size, config.max_tokens_per_batch)
 
-        task_configs = MTEB_PROMPTS_FLAT | CUSTOM_PROMPTS # combine prompt dictionaries
+        task_configs = BEST_PROMPTS # MTEB_PROMPTS_FLAT | CUSTOM_PROMPTS # combine prompt dictionaries
         logger.info(f"Going to run evaluation for {len(task_configs)} unique task descriptions.")
         
         for task_name, task_description in task_configs.items():
+
+            # Only run once per model with its best prompt
+            if task_description != config.best_prompt:
+                continue
 
             similarities_path, indices_path = get_results_paths(RESULTS_DIR, config.model_name, task=task_name)
             """
