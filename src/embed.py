@@ -9,6 +9,7 @@ from sentence_transformers import SentenceTransformer
 from torch import Tensor
 import tiktoken
 from src.utils.helpers import do_batching, yield_titles_with_instructions
+from config.task_prompts import BEST_PROMPTS
 
 logger = logging.getLogger(__name__)
 
@@ -67,9 +68,9 @@ class BatchEmbedder:
 
     def get_prompt(self):
         if "qwen" in self.model_name:
-            return "Hae oikea artikkeli, joka kuuluu seuraavalle uutisotsikolle"
+            return BEST_PROMPTS["BestQwen"]
         elif "multilingual-e5" in self.model_name:
-            return "Retrieve text based on user query."
+            return BEST_PROMPTS["BestE5"]
         else:
             return ""
         
